@@ -1,43 +1,119 @@
-# Python Working Group @ ZAS
-This repository stores materials to Python working group established at ZAS, Berlin
+# 🐍 Python Working Group @ ZAS
 
+A collaborative learning space for Python at the Leibniz-Zentrum Allgemeine Sprachwissenschaft, Berlin.
 
-## Get ready
-This group will regularly use several softwares:
-- Python (recommended via Anaconda)
-- Code editor
-- Github Desktop
+This repository stores **session materials, notebooks, and code** from our bi-weekly meetings. Whether you just ran your first Python script or you've been writing it for years — you belong here.
 
-If you don't have any of these, please follow the steps below.
+> **Organizers:** Daniela Palleschi & Šárka Kadavá — feel free to reach out with questions or ideas.
 
-### Step 1: Installing Python
+---
 
-To be able to follow the workshop and explore the coding procedures, you will need to have a Python available. 
+## What is this group?
 
-The easiest way to get Python is installing [Anaconda](https://www.anaconda.com/download), a common platform for this programming language.
+The Python Working Group is a friendly, low-pressure space to learn and practice Python together. We meet bi-weekly for ~1.5 hours. Each session focuses on a topic — data wrangling, visualization, signal processing, machine learning, and more — with a mix of short introductions and hands-on work using real data from our own research.
 
-> [!IMPORTANT] 
-> At some point during the installation process, you need to check :ballot_box_with_check: that you want **to add Anaconda/Python to system path**. Without that, your command prompt or the text editor will not know where to find executor. 
+There is no fixed pace and no single teacher. One person hosts each session, others contribute, and everyone is welcome to bring their own problems, datasets, or questions.
 
-If you feel you need a guidance, you can follow one of many tutorials online (e.g., [here for Mac]( https://www.youtube.com/watch?v=YJC6ldI3hWk), and [here for Windows](https://www.youtube.com/watch?v=UTqOXwAi1pE)). 
+---
 
-### Step 2: Get yourself a fancy text editor
+## Repository structure
 
-To work with Python scripts, it is very convenient to have a text editor. Essentially, this can be any software that can edit texts, but we personally recommend to use [Visual Studio Code](https://code.visualstudio.com/). If you are used to the environment of RStudio, you can also check out [Positron](https://positron.posit.co/). 
+```
+📁 sessions/          # One folder per session with notebooks and materials
+📁 data/              # Shared example datasets used across sessions
+📁 resources/         # Cheatsheets, links, and reference documents
+📁 programme/         # The 6-month programme plan
+📁 imgs/              # Images used in this README
+```
 
-Once you have installed it, you need to do few more adjustments so that VS Code can recognize a Python script. Go to Extension panel (*Ctrl + Shift + X*) and search for Python. Click on the install button, et voilà! Do the same with extension Jupyter.
+Each session folder is named `session_XX_topic` and contains a Jupyter notebook, any data files used, and a short notes file.
 
-> [!TIP] 
-> One of the reasons why VS Code is really nice lies in the extensions. One of my favorites is [Data Wrangle](https://code.visualstudio.com/docs/datascience/data-wrangler) that allows you to look through your dataframe in much more friendly way than, for instance, RStudio (no hate though :angel:)
+---
 
-### Step 3: Clone/download the repository
+## Getting started
 
-Once you are all set up, it's time to get this repository to your PC.
+Before the first session, you will need three things: **Python**, a **code editor**, and a way to **sync this repository**. Follow the steps below — it should take 20–30 minutes total.
 
-Here, you can either use [Github Desktop](https://desktop.github.com/download/) which will later also allow you to synchronize your local version of this repository with any updates I may do here.
+---
 
-> [!NOTE] 
-> **How to clone repository via Github?** After installing, launching Github Desktop, and signing in with your Github credentials, simply click on *File > Clone repository... > URL* and paste there the link to this repository, https://github.com/sarkadava/MotionTrackingPipeline_Workshop_ZAS2025
+### Step 1 — Install Python
 
-If you don't want to install yet another software, you can just download the repository. At the top of this page, click on **<> Code** and then **Download ZIP**. This will download the repository.
-![alt text](imgs/image.png)
+We recommend installing Python via [**Anaconda**](https://www.anaconda.com/download), which bundles Python with many commonly used packages (numpy, pandas, matplotlib, etc.) and makes managing environments much easier.
+
+> [!IMPORTANT]
+> During installation, check ✅ **Add Anaconda/Python to system PATH**. Without this, your editor and terminal will not be able to find Python.
+
+If you would like a guided walkthrough, video tutorials are available for [Mac](https://www.youtube.com/watch?v=YJC6ldI3hWk) and [Windows](https://www.youtube.com/watch?v=UTqOXwAi1pE).
+
+---
+
+### Step 2 — Install a code editor
+
+To write and run Python, you need a code editor. We recommend [**Visual Studio Code**](https://code.visualstudio.com/) — it is free, widely used, and works well with Jupyter notebooks.
+
+If you are coming from an R/RStudio background, you might also like [**Positron**](https://positron.posit.co/), which follows a similar layout to RStudio.
+
+**After installing VS Code**, add two extensions:
+
+1. Open the Extensions panel (`Ctrl+Shift+X` on Windows/Linux, `Cmd+Shift+X` on Mac)
+2. Search for **Python** → Install
+3. Search for **Jupyter** → Install
+
+That is all VS Code needs to run Python scripts and notebooks.
+
+> [!TIP]
+> Once you are comfortable, try the [**Data Wrangler**](https://code.visualstudio.com/docs/datascience/data-wrangler) extension — it gives you a spreadsheet-style view of your DataFrames, which is genuinely nicer than most alternatives (no RStudio hate intended 😇).
+
+---
+
+### Step 3 — Get this repository
+
+You have two options:
+
+**Option A — GitHub Desktop (recommended):**
+
+Install [GitHub Desktop](https://desktop.github.com/download/), sign in with your GitHub account, then go to *File → Clone repository → URL* and paste:
+
+```
+https://github.com/sarkadava/python-working-group-zas
+```
+
+This keeps your local copy in sync with any updates — you will get new session materials automatically.
+
+**Option B — Direct download:**
+
+At the top of this page, click **<> Code → Download ZIP** and unzip wherever you like. You will need to re-download manually when new sessions are added.
+
+![Screenshot showing the Code button and Download ZIP option on GitHub](imgs/download_zip.png)
+
+---
+
+## Contributing
+
+This is a group repository — contributions are welcome and encouraged. Here is how to add your work:
+
+1. **Create a branch** for your changes (e.g. `session-07-signal-processing`)
+2. Add your notebook or script to the appropriate `sessions/` folder
+3. Open a **pull request** and briefly describe what you added
+4. One of the organizers will review and merge it
+
+Not sure how to do any of that yet? No problem — we cover Git basics in Session 4 (Reproducible & Readable Code). Until then, just send your files to Daniela or Šárka and we will add them for you.
+
+---
+
+## New to Python?
+
+If you have never used Python before, here are a few places to get a first feel before sessions start — none of these are required:
+
+- [Kaggle Python micro-course](https://www.kaggle.com/learn/python) — free, browser-based, ~5 hours
+- [Computational and Inferential Thinking](https://inferentialthinking.com) — free online textbook, very accessible
+- [Corey Schafer's Python Basics series](https://www.youtube.com/playlist?list=PL-osiE80TeTskrapNbzXhwoFUiLCjGgY7) — clear YouTube tutorials, ~10–15 min each
+
+---
+
+## Questions?
+
+Open an [Issue](../../issues) in this repository, or reach out directly:
+
+- Šárka Kadavá — `kadava@leibniz-zas.de`
+- Daniela Palleschi — `palleschi@leibniz-zas.de`
