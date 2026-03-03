@@ -110,5 +110,5 @@ If you have never used Python before, here are a few places to get a first feel 
 
 Open an [Issue](../../issues) in this repository, or reach out directly:
 
-- Šárka Kadavá — `kadava@leibniz-zas.de`
-- Daniela Palleschi — `palleschi@leibniz-zas.de`
+- Šárka Kadavá — `kadava[at]leibniz-zas[dot]de`
+- Daniela Palleschi — `palleschi[at]leibniz-zas[dot]de`
