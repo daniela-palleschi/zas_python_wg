@@ -60,6 +60,13 @@ That is all VS Code needs to run Python scripts and notebooks.
 
 > [!TIP]
 > Once you are comfortable, try the [**Data Wrangler**](https://code.visualstudio.com/docs/datascience/data-wrangler) extension — it gives you a spreadsheet-style view of your DataFrames, which is genuinely nicer than most alternatives (no RStudio hate intended 😇).
+>
+> The [**Data Wrangler**](https://code.visualstudio.com/docs/datascience/data-wrangler) extension is unfortunately not available in Positron's extension marketplace. However, Positron has a built-in data explorer that gives you a similar spreadsheet-style view of your DataFrames.
+
+**After installing Positron**, Python and Jupyter support are built in — no extensions needed.
+
+> [!TIP]
+> Positron is built by Posit (the same team behind RStudio) and is designed for data science workflows in both R and Python. It is a great choice if you are already familiar with RStudio.
 
 ---
 
@@ -80,6 +87,22 @@ This keeps your local copy in sync with any updates — you will get new session
 **Option B — Direct download:**
 
 At the top of this page, click **<> Code → Download ZIP** and unzip wherever you like. You will need to re-download manually when new sessions are added.
+
+**Option C — Terminal:**
+
+First, make sure git is installed by running the following in the Terminal (tab next to `Console`):
+```bash
+git --version
+```
+
+If you see a version number, you are good to go. If not, download git from [git-scm.com](https://git-scm.com).
+
+Then clone the repository:
+```bash
+git clone https://github.com/sarkadava/ZAS_Python_WG.git
+```
+
+The repository will be downloaded to your current directory. You can then run `git pull` at any time to get the latest updates.
 
 ---
 
