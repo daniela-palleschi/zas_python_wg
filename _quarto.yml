@@ -1,0 +1,20 @@
+project:
+  type: book
+
+book:
+  title: "Python WG (ZAS)"
+  author: "Daniela Palleschi"
+  chapters:
+    - index.qmd
+    - part: "Day 1"
+      chapters:
+        - daniela/01-intro/exercise_01_debug_me.qmd
+
+format:
+  html:
+    css: styles.css
+    toc: true
+    toc-float: true
+
+execute:
+  engine: jupyter

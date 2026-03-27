@@ -1,0 +1,28 @@
+---
+title: "Setup"
+format: html
+---
+
+# Install and update Positron
+
+I had an old version of Positron which was giving me problems.
+
+I set up a venv, similar to renv.
+
+## Install/update Python and R
+
+I had no python and an old R version
+
+# Packages
+
+In the venv I installe dthe following packages:
+
+In the renv I installed the following packages:
+
+```{r}
+#install.packages("pacman")
+pacman::p_load(rmarkdown, knitr, reticulate)
+```
+
+
+

@@ -1,0 +1,144 @@
+---
+title: "Debug me"
+engine: jupyter
+---
+
+## Task {.unnumbered}
+
+Run this script. Several things will break. Find and fi each error, one at a time.
+
+::: {.callout-tip}
+Read the error messages carefully -- python usually tells you exaction what is wrong and on which line.
+:::
+
+## Imports
+
+::: {.callout-note}
+### python version of `here`
+
+```{python}
+from pyprojroot import here
+```
+
+:::
+
+```{python}
+import numpy as np       # baseR
+import pandas as pd      # tidyverse; mainly dplyr and tibble
+import seaborn as sns    # ggplot2
+```
+
+```{r}
+# install.packages("pacman")
+pacman::p_load(dplyr, tibble, ggplot2, readr, here)
+```
+
+## Load data
+
+Make sure you are running the script from the project root, or adjust the path below.
+
+```{python}
+#| eval: false
+df = pd.read_csv("data/scores.csv")
+```
+
+```{r}
+df <- read_csv(here("data","scores.csv"))
+```
+
+::: {.callout-note}
+### My fix
+
+I don't have a working directory set. Do that.
+
+```{python}
+import os
+os.getcwd()
+```
+
+Wrong, that wasn't the problem. The problem was that data isn't in the project parent node; it's nested within sessions/march27; but i can also load it in using here from pyprojroot which uses wherever a .git file is as the project root
+
+```{python}
+df = pd.read_csv(here("data/scores.csv"))
+```
+
+OR, change the wd to be the `sessions/march-27` folder. The equivalent to `setwd()` in python is:
+
+```{python}
+#| eval: false
+os.chdir("sessions/march-27")
+```
+
+I will *not* use this option though. My preferred project structure would have `data/` in the project folder head.
+
+
+:::
+
+## Quick look
+
+```{python}
+print("Shape:", df.shape)
+print(df.head())
+```
+
+```{r}
+length(df)
+nrow(df)
+head(df)
+```
+
+## Filter rows
+
+```{python}
+#| eval: false
+# Keep only rows where condition is TRUE
+good_rows <- df["score"] > 50        
+
+print("Rows passing filter:", len(good_rows))
+```
+
+
+
+```{python}
+# Keep only rows where condition is TRUE
+good_rows = df[df["score"] > 50]    
+
+print("Rows passing filter:", len(good_rows))
+```
+
+
+```{r}
+good_rows <-
+    df |>
+    filter(score > 50)
+```
+
+```{r}
+paste("Rows passing filter:", nrow(good_rows))
+```
+
+## Compute a summary
+
+```{python}
+#| eval: false
+
+# --- 4. COMPUTE A SUMMARY ---------------------------------
+
+mean_score = df["score"].mean()
+max_score  = df["score"].max()
+
+print("Mean score:", round(mean_score, 2)       
+print("Max score: ", max_score)
+
+
+# --- 5. ADD A NEW COLUMN ----------------------------------
+
+# Normalise scores to 0–1 range
+df["score_norm"] = (df["score"] - df["score"].min()) / \
+                   (df["score"].max() - df["score"].min)  
+
+
+# --- 6. PLOT ----------------------------------------------
+
+sns.histplot(data=df, x="score_norm")
+```

@@ -1,0 +1,121 @@
+# Preface
+
+- Link to group repo
+- Link to book repo
+
+# Script types
+
+| File type | R equivalent | Notes |
+|---|---|---|
+| `.py` | `.R` | plain Python script |
+| `.ipynb` | `.Rmd` / `.qmd` | Jupyter notebook; code + prose |
+| `.qmd` | `.qmd` | Quarto document; works in both R and Python |
+
+**IDE support:**
+
+| | `.py` | `.ipynb` | `.qmd` | `.Rmd` | `.R` |
+|---|---|---|---|---|---|
+| Positron | ✅ | ✅ | ✅ | ✅ | ✅ |
+| VS Code | ✅ | ✅ | ✅ | ❌ | ✅ |
+| RStudio | ⚠️ | ❌ | ✅ | ✅ | ✅ |
+
+RStudio can run `.py` files via the `reticulate` package but it's not a first-class experience, hence the ⚠️. It also lacks native `.ipynb` support.
+
+# Quarto
+
+- Native support for R and Python
+- Can render `.qmd` files to HTML, PDF, Word, and more
+- Jupyter notebooks (`.ipynb`) natively support only Python; Quarto is the cross-language alternative
+
+# Extensions
+
+- In Positron and VS Code, extensions are available via the Activity Bar on the left (four squares icon)
+- Extensions are analogous to R packages: they add functionality to your IDE
+- Examples: language support, themes, Git integration, linters, notebook tools
+
+# Environments
+
+An environment is an isolated Python installation with its own packages and Python version, separate from your system Python and other projects. This avoids conflicts when different projects need different package versions.
+
+A Python environment is similar to an RProject with renv: it isolates your package library per project. The main extra benefit is that it also locks in a specific Python version, which renv doesn't do for R.
+
+**Benefits:**
+
+- Different Python versions per project
+- Project-relative package libraries (nothing bleeds between projects)
+- Reproducibility: share an environment file and collaborators get the exact same setup
+
+**Main tools:**
+
+| Tool | What it does | Ships with Python? |
+|---|---|---|
+| pip | installs packages | yes |
+| venv | creates isolated environments | yes |
+| conda | does both + handles non-Python dependencies (e.g. C libraries) | no |
+| Anaconda | full distribution: Python + conda + pip + pre-installed scientific packages | no |
+| Homebrew (Mac) | installs system-level software, including Python itself | no |
+| winget / Chocolatey (Windows) | same as Homebrew but for Windows | no |
+
+## venv
+
+- Python's built-in environment manager (like `renv` in R)
+- Creates an isolated folder (`.venv`) inside your project with its own Python interpreter and package library
+- Nothing installed inside `.venv` affects other projects or your system Python
+- Activate it once per terminal session; pip then installs into it automatically
+
+## pip
+
+- Python's built-in package installer (like `install.packages()` in R)
+- Installs from PyPI (the Python Package Index) — analogous to CRAN
+- Used inside a `.venv` to keep installs project-local
+
+## .venv + pip
+
+- The modern, lightweight approach: built into Python, no extra installation needed
+- Workflow:
+```bash
+    python -m venv .venv          # create environment
+    source .venv/bin/activate     # activate (Mac/Linux)
+    .venv\Scripts\activate        # activate (Windows)
+    pip install pandas jupyter    # install packages
+    pip freeze > requirements.txt # record dependencies
+```
+- The `.venv` folder lives inside your project directory
+
+
+## Anaconda
+
+- A full Python distribution (~3GB) — heavy, but installed once system-wide
+- Bundles Python + conda + pip + common scientific packages (numpy, pandas, scipy, etc.)
+- Managed by the company Anaconda Inc.; conda is their open-source package/environment manager
+- conda can resolve complex dependency conflicts, including non-Python libraries
+- Useful if you're on Windows and have historically had trouble installing scientific packages
+
+## Comparison to renv
+
+- venv (and Anaconda environments) are conceptually similar to using `renv` in an RProject
+- The `requirements.txt` (pip) or `environment.yml` (conda) is analogous to `renv.lock`
+- In Anaconda, `(base)` = your global package library; any named environment = isolated project library
+- In R terms: `(base)` ≈ your system library; a conda/venv environment ≈ an `renv` project library
+
+# IDE and environment support
+
+| | R | Python |
+|---|---|---|
+| Environment/isolation | RProject + `renv` | `.venv` |
+| Package install | `install.packages()` / `pak` / `pacman` | `pip` |
+| Lock file | `renv.lock` | `requirements.txt` |
+| Package registry | CRAN | PyPI |
+| IDE support | RStudio ✅, Positron ✅, VS Code ✅ | Positron ✅, VS Code ✅, RStudio ⚠️ |
+
+# Git and GitHub
+
+- **Git**: version control system — tracks changes to your code over time
+- **GitHub**: a platform for hosting remote Git repositories
+- Workflow: make changes locally → commit → push to GitHub
+- GitHub also serves as a public portfolio of your work — useful for showing contributions to the community
+- Analogous to having a lab notebook that's also publicly visible and time-stamped
+
+# Before starting
+
+- make sure you have python, jupyter notebook, anaconda (if you want to use it), and the github repo clonded/downloaded
