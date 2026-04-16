@@ -1,0 +1,109 @@
+---
+title: "Translate R to Python"
+subtitle: "ZAS Python Working Group — Session 1, Exercise 2"
+format: html
+engine: jupyter
+knitr: true
+---
+
+# Assignment operator
+
+```{r}
+#| eval: false
+participant_count <- 12
+session_num <- 1
+```
+
+```{python}
+participant_count = 12
+session_num = 1
+```
+
+# Logical
+
+All caps in R.
+
+```{r}
+#| eval: false
+is_recorded <- TRUE
+has_video   <- FALSE
+```
+
+Capitalised in Python.
+
+```{python}
+is_recorded = True
+has_video   = False
+```
+
+# Indexing
+
+R: concatenate with `c()` and indexing begins at 1. Last element with `length(x)`.
+```{r}
+#| eval: false
+scores <- c(72, 85, 61, 90, 78)
+first_score <- scores[1]
+last_score  <- scores[length(scores)]
+```
+
+Python: concatenate with `[]` and indexing begins at 1. To extract last element use `-1`.
+```{python}
+scores = [72, 85, 61, 90, 78]
+first_score = scores[0]
+last_score  = scores[-1]
+```
+
+# Paste
+
+In R: `cat()` removes numerical prefix (`[1]`) added by `paste()`. New line with `\n`.
+
+```{r}
+#| eval: false
+cat(paste("Participant count:", participant_count, "\n"))
+cat(paste("Session:", session_num, "\n"))
+cat(paste("Mean score:", mean(scores), "\n"))
+```
+
+Python: `print()` adds new line automatically. f-string handles concatenataion. Using `scores.mean()` won't work here because `scores` is a plain Python list, not a numpy array or pandas series (which it would be if above it was e.g., `scores = np.array([72, 85, 61, 90, 78])`).
+
+```{python}
+print(f"Participant count: {participant_count}")
+print(f"Session: {session_num}")
+print(f"Participant count: {sum(scores) / len(scores)}")
+```
+
+# Function
+
+```{r}
+#| eval: false
+normalise <- function(x) {
+  (x - min(x)) / (max(x) - min(x))
+}
+```
+
+Python: `def` to define a function with explictly state what to `return`
+```{python}
+def normalise(x):
+    return (x - min(x)) / (max(x) - min(x))
+```
+
+```{r}
+#| eval: false
+normalised_scores <- normalise(scores)
+cat(paste("Normalised:", normalised_scores, "\n"))
+```
+
+Python: we need to convert to a numpy array first because Python lists don't support arthimetic operations. This is a huge difference between Python and R. Normally we'd import `numpy` at the top of the script, but we'll keep it here for now.
+
+```{python}
+import numpy as np
+scores = np.array([72, 85, 61, 90, 78])
+normalised_scores = normalise(scores)
+```
+
+:::{.callout-tip}
+## Python is general-purpose
+
+R was designed from the ground up for statistical computing, so statistical and mathematical operations are baked into the language. Python is a general-purpose programming language not specifically intended for data analysis. Statistical functionality is added through libraries like `numpy`, `pandas`, and `scipy`. That's why Python is ideal for data processing and R is ideal for analyses.
+
+:::

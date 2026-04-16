@@ -1,6 +1,7 @@
 ---
 title: "Debug me"
 engine: jupyter
+knitr: true
 ---
 
 ## Task {.unnumbered}
@@ -23,12 +24,15 @@ from pyprojroot import here
 :::
 
 ```{python}
+# python                 # R equivalent
 import numpy as np       # baseR
 import pandas as pd      # tidyverse; mainly dplyr and tibble
 import seaborn as sns    # ggplot2
 ```
 
 ```{r}
+#| code-fold: true
+#| code-summary: "R equivalent"
 # install.packages("pacman")
 pacman::p_load(dplyr, tibble, ggplot2, readr, here)
 ```
@@ -43,6 +47,8 @@ df = pd.read_csv("data/scores.csv")
 ```
 
 ```{r}
+#| code-fold: true
+#| code-summary: "R equivalent"
 df <- read_csv(here("data","scores.csv"))
 ```
 
@@ -82,6 +88,8 @@ print(df.head())
 ```
 
 ```{r}
+#| code-fold: true
+#| code-summary: "R equivalent"
 length(df)
 nrow(df)
 head(df)
@@ -97,7 +105,7 @@ good_rows <- df["score"] > 50
 print("Rows passing filter:", len(good_rows))
 ```
 
-
+My fix: change `<-` (R syntax) to `=` (also works in R).
 
 ```{python}
 # Keep only rows where condition is TRUE
@@ -108,37 +116,64 @@ print("Rows passing filter:", len(good_rows))
 
 
 ```{r}
+#| code-fold: true
+#| code-summary: "R equivalent"
 good_rows <-
     df |>
     filter(score > 50)
-```
 
-```{r}
 paste("Rows passing filter:", nrow(good_rows))
 ```
 
 ## Compute a summary
 
 ```{python}
-#| eval: false
-
-# --- 4. COMPUTE A SUMMARY ---------------------------------
-
 mean_score = df["score"].mean()
 max_score  = df["score"].max()
 
-print("Mean score:", round(mean_score, 2)       
+print("Mean score:", round(mean_score, 2)) 
 print("Max score: ", max_score)
+```
 
+```{r}
+#| code-fold: true
+#| code-summary: "R equivalent"
+mean_score <- mean(df$score)
+max_score <- max(df$score)
 
-# --- 5. ADD A NEW COLUMN ----------------------------------
+paste("Mean score:", round(mean_score,2))
+paste("Max score:", max_score)
+```
 
+## Add a new column
+
+Fix: wrap whole expression in brackets and remove forward slash.
+
+```{python}
 # Normalise scores to 0–1 range
-df["score_norm"] = (df["score"] - df["score"].min()) / \
-                   (df["score"].max() - df["score"].min)  
+df["score_norm"] = (
+    (df["score"] - df["score"].min()) /
+    (df["score"].max() - df["score"].min()) 
+)
 
+```
 
-# --- 6. PLOT ----------------------------------------------
+```{r}
+#| code-fold: true
+#| code-summary: "R equivalent"
 
-sns.histplot(data=df, x="score_norm")
+df$score_norm = (df$score - min(df$score)) / (max(df$score) - min(df$score))
+```
+
+# Plot
+
+```{python}
+sns.histplot(data = df, x = "score_norm")
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "R equivalent"
+
+hist(df$score_norm)
 ```

@@ -9,6 +9,7 @@ book:
     - part: "Day 1"
       chapters:
         - daniela/01-intro/exercise_01_debug_me.qmd
+        - daniela/01-intro/exercise_02_r_to_python.qmd
 
 format:
   html:

@@ -4,3 +4,5 @@ _book/
 .vscode/
 
 /.quarto/
+
+**/*.quarto_ipynb

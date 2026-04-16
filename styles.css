@@ -7,5 +7,5 @@ div.sourceCode:has(pre.python) {
 /* R blocks */
 div.sourceCode:has(pre.r) {
   background-color: #f0f7e8;
-  border-left: 4px solid #276dc3;
+  border-left: 4px solid #146b17;
 }
