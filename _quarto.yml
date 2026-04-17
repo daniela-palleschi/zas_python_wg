@@ -6,10 +6,16 @@ book:
   author: "Daniela Palleschi"
   chapters:
     - index.qmd
-    - part: "Day 1"
+    - part: "Intro"
       chapters:
+        - daniela/01-intro/session1_handout.qmd
         - daniela/01-intro/exercise_01_debug_me.qmd
         - daniela/01-intro/exercise_02_r_to_python.qmd
+    - part: "Python basics"
+      chapters:
+        - daniela/02-basics/session2_handout.qmd
+        - daniela/02-basics/cleaning-imdb-dataset.ipynb
+        - daniela/02-basics/session2_exercise.ipynb
 
 format:
   html:
@@ -19,3 +25,8 @@ format:
 
 execute:
   engine: jupyter
+  error: true
+  remove-unused-chunk-options: true
+  code-tools: true
+  embed-resources: true
+
