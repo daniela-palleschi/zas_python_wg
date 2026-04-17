@@ -1,0 +1,350 @@
+---
+title: "The Stuff You Always Forget"
+subtitle: "ZAS Python Working Group"
+description: "Variables • Data types • Lists, tuples & dicts • Loops • Conditionals • Functions • Reading a CSV"
+format: html
+---
+
+# Learning Objectives
+
+- Write basic Python: variables, `if`/`else`, `for` loops
+- Understand lists, tuples, and dicts
+- Write and call a simple function
+- Read a CSV file and print its contents
+
+# 1 Variables & Data Types
+
+Python is dynamically typed — you never declare a type, Python infers it. Use `type()` to inspect at any time.
+
+```python
+rt        = 0.423          # float  (reaction time in seconds)
+n_trials  = 48             # int
+condition = 'congruent'    # str
+correct   = True           # bool
+
+print(type(rt))            # <class 'float'>
+print(type(n_trials))      # <class 'int'>
+```
+
+::: {.callout-note title="R / Matlab"}
+```
+R:      rt <- 0.423   │   class(rt) => 'numeric'
+Matlab: rt = 0.423;   │   class(rt) => 'double'
+```
+Python has no implicit numeric promotion — `int` stays `int` unless you divide (`5 / 2 = 2.5`).  
+Integer division: `5 // 2 = 2` │ Remainder: `5 % 2 = 1`
+:::
+
+## Common type conversions
+
+```python
+int('42')          # => 42
+float('3.14')      # => 3.14
+str(99)            # => '99'
+bool(0)            # => False  (0, '', None, [], {} are all falsy)
+```
+
+::: {.callout-warning title="Watch out"}
+Strings are immutable in Python — you cannot do `s[0] = 'X'`. Build a new string instead.
+:::
+
+# 2 Data Structures: Lists, Tuples, Dicts
+
+## Lists `[ ]`
+
+Ordered, mutable, can hold mixed types. The everyday workhorse.
+
+```python
+rts = [0.423, 0.381, 0.512, 0.299, 0.478]
+
+rts[0]          # 0.423  — first element (0-indexed!)
+rts[-1]         # 0.478  — last element
+rts[1:3]        # [0.381, 0.512]  — slice: index 1 up to (not including) 3
+
+rts.append(0.350)          # add one item at the end
+rts.extend([0.410, 0.390]) # add multiple items
+len(rts)                   # number of items
+sorted(rts)                # returns a new sorted list (does not modify rts)
+rts.sort()                 # sorts rts in place
+```
+
+::: {.callout-note title="R / Matlab"}
+```
+R:      rts <- c(0.423, 0.381, ...)  │  rts[1]  (1-indexed!)
+Python: rts = [0.423, 0.381, ...]   │  rts[0]  (0-indexed)
+```
+`R`'s `length()` → Python's `len()`  
+`R`'s `append()` → Python's `.append()` or `.extend()` for multiple items
+:::
+
+## Tuples `( )`
+
+Like lists but immutable — contents cannot change after creation. Good for things that should stay fixed (coordinates, column headers, return values from a function).
+
+```python
+participant = ('P07', 'Klara', 24)   # id, name, age
+participant[0]    # 'P07'
+# participant[0] = 'P99'  => TypeError! tuples are immutable
+
+# Unpack a tuple into variables:
+pid, name, age = participant
+print(name)       # Klara
+```
+
+## Dictionaries `{ }`
+
+Key–value pairs. Think of named columns, or R's named lists. Keys must be unique.
+
+```python
+trial = {
+    'participant': 'P07',
+    'condition':   'congruent',
+    'rt':          0.423,
+    'correct':     True
+}
+
+trial['rt']              # 0.423  — access by key
+trial['rt'] = 0.399      # update a value
+trial['block'] = 1       # add a new key
+
+trial.keys()             # dict_keys(['participant', 'condition', ...])
+trial.values()           # dict_values(['P07', 'congruent', ...])
+trial.get('block', 0)    # safe access: returns 0 if key missing
+```
+
+::: {.callout-note title="R / Matlab"}
+```
+R named list:  trial <- list(participant='P07', rt=0.423)
+               trial$rt  or  trial[['rt']]
+Python dict:   trial = {'participant': 'P07', 'rt': 0.423}
+               trial['rt']
+```
+:::
+
+::: {.callout-tip title="Tip: When to use which?"}
+- **List** = ordered sequence of similar things
+- **Tuple** = fixed record that should not change
+- **Dict** = labelled data where you look things up by name
+:::
+
+# 3 Conditionals
+
+Python uses indentation to define blocks — there are no curly braces or `end` keywords. Consistent indentation is not optional; it **is** the syntax.
+
+```python
+rt = 0.423
+
+if rt < 0.3:
+    print('Fast response')
+elif rt < 0.5:
+    print('Normal response')
+else:
+    print('Slow response')
+```
+
+::: {.callout-note title="R vs Python"}
+| R | Python |
+|---|--------|
+| `if (rt < 0.3) {` | `if rt < 0.3:` |
+| `  print('Fast')` | `    print('Fast')` |
+| `} else if (rt < 0.5) {` | `elif rt < 0.5:` |
+| `  print('Normal')` | `    print('Normal')` |
+| `} else {` | `else:` |
+| `  print('Slow')` | `    print('Slow')` |
+| `}` | |
+:::
+
+Combining conditions:
+
+```python
+if rt < 0.5 and correct == True:
+    print('Valid fast trial')
+
+if rt > 1.0 or correct == False:
+    print('Exclude this trial')
+
+if condition != 'practice':   # != means 'not equal'
+    print('Experimental trial')
+```
+
+::: {.callout-warning title="Watch out"}
+Python uses `and`, `or`, `not` — not `&&`, `||`, `!` like R.  
+Equality check is `==`, not `=` (which is assignment).
+:::
+
+# 4 Loops
+
+## `for` loop — iterating over a list
+
+```python
+rts = [0.423, 0.381, 0.512, 0.299, 0.478]
+
+for rt in rts:
+    print(round(rt, 3))
+```
+
+## `range()` — counting loops
+
+```python
+for i in range(5):        # 0, 1, 2, 3, 4
+    print(i)
+
+for i in range(1, 6):     # 1, 2, 3, 4, 5
+    print(i)
+```
+
+::: {.callout-note title="R / Matlab"}
+```
+R:      for (i in 1:5) { ... }
+Python: for i in range(1, 6): ...
+```
+Note: `range(1, 6)` gives 1 to 5 — the stop value is excluded.
+:::
+
+## `enumerate()` — loop with index
+
+```python
+conditions = ['congruent', 'incongruent', 'neutral']
+
+for i, cond in enumerate(conditions):
+    print(i, cond)
+# 0 congruent
+# 1 incongruent
+# 2 neutral
+```
+
+## List comprehensions — compact loops
+
+A Pythonic way to build a new list from an existing one in a single line.
+
+```python
+rts_ms = [rt * 1000 for rt in rts]           # convert to milliseconds
+fast    = [rt for rt in rts if rt < 0.4]     # filter: keep only fast RTs
+```
+
+::: {.callout-note title="R / Matlab"}
+```
+R:      rts_ms <- rts * 1000          (vectorised — no loop needed)
+Python: rts_ms = [rt * 1000 for rt in rts]
+```
+With numpy/pandas, Python is also vectorised. List comprehensions are for plain lists.
+:::
+
+# 5 Functions
+
+Define once, reuse anywhere. Functions help you avoid copy-pasting the same code block.
+
+```python
+def mean_rt(times):
+    """Return the mean of a list of reaction times."""
+    return sum(times) / len(times)
+
+# Call it:
+avg = mean_rt([0.423, 0.381, 0.512])
+print(f'Mean RT: {avg:.3f} s')   # Mean RT: 0.439 s
+```
+
+## Default arguments
+
+```python
+def summarise_rt(times, unit='s'):
+    avg = sum(times) / len(times)
+    if unit == 'ms':
+        avg = avg * 1000
+    return avg
+
+summarise_rt(rts)            # uses default: seconds
+summarise_rt(rts, unit='ms') # milliseconds
+```
+
+## Returning multiple values
+
+```python
+def rt_stats(times):
+    return min(times), max(times), sum(times) / len(times)
+
+lo, hi, avg = rt_stats(rts)   # unpack the returned tuple
+print(f'Min: {lo:.3f}  Max: {hi:.3f}  Mean: {avg:.3f}')
+```
+
+::: {.callout-note title="R / Matlab"}
+```
+R:      my_fun <- function(x, unit = 's') { ... }
+Python: def my_fun(x, unit='s'):  ...
+```
+R returns the last expression; Python needs an explicit `return`.  
+R returns a list for multiple values; Python returns a tuple (unpack with `a, b = fun()`).
+:::
+
+::: {.callout-tip title="Tip"}
+Write a docstring (the triple-quoted string right after `def`) — it shows up when you call `help(my_fun)` or hover over it in VS Code.
+:::
+
+# 6 Reading a CSV File
+
+Two approaches: the built-in `csv` module (no dependencies), or `pandas` (more powerful, covered in Session 3).
+
+## Option A — built-in `csv` module
+
+```python
+import csv
+
+with open('data/scores.csv', newline='') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        print(row['name'], row['score'])
+```
+
+`csv.DictReader` reads each row as a dict with column names as keys — no extra libraries needed.
+
+## Option B — pandas (preview of Session 3)
+
+```python
+import pandas as pd
+
+df = pd.read_csv('data/scores.csv')
+print(df.head())           # first 5 rows
+print(df['score'].mean())  # column mean
+```
+
+::: {.callout-note title="R / Matlab"}
+```
+R:               df <- read.csv('data/scores.csv')
+Python (pandas): df = pd.read_csv('data/scores.csv')
+```
+Both give you a table-like object. Pandas' `DataFrame` ≈ R's `data.frame`.
+:::
+
+::: {.callout-tip title="Tip"}
+Always use `with open(...)` — it automatically closes the file even if an error occurs.
+:::
+
+# Quick Reference
+
+| Task | R | Python |
+|---|---|---|
+| **Assign** | `x <- 5` | `x = 5` |
+| **True / False** | `TRUE / FALSE` | `True / False` |
+| **Null / None** | `NULL` | `None` |
+| **And / Or / Not** | `&& / \|\| / !` | `and / or / not` |
+| **Print** | `cat() / print()` | `print()` |
+| **Length** | `length(x)` | `len(x)` |
+| **Type** | `class(x)` | `type(x)` |
+| **Range** | `1:5` | `range(1, 6)` |
+| **Loop** | `for (i in vec) {}` | `for i in vec:` |
+| **Function** | `f <- function(x) {}` | `def f(x):` |
+| **Read CSV** | `read.csv('f.csv')` | `pd.read_csv('f.csv')` |
+| **Comment** | `#` | `#` |
+
+# Resources
+
+- McKinney Ch. 2–3 — Python built-in data structures (free online)
+- inferentialthinking.com Ch. 3–5 — Programming, data types, sequences (very accessible)
+- Corey Schafer — 'Python Basics' series, episodes 1–5 (YouTube)
+- Kaggle Python micro-course — interactive exercises, free
+- Cheatsheets linked on the SharePoint: Python vs. R | Python quick reference
+- NumPy reference: <https://numpy.org/doc/stable/reference/>
+
+---
+
+*Questions? Suggestions? Reach out to Daniela & Šárka or post on the mailing list.*

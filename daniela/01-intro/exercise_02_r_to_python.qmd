@@ -8,18 +8,22 @@ knitr: true
 
 # Assignment operator
 
+You can use `<-` or `=` in R.
+
 ```{r}
 #| eval: false
 participant_count <- 12
-session_num <- 1
+session_num = 1
 ```
+
+But only `=` in Python.
 
 ```{python}
 participant_count = 12
 session_num = 1
 ```
 
-# Logical
+# Boolean/logical
 
 All caps in R.
 

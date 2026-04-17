@@ -29,4 +29,7 @@ execute:
   remove-unused-chunk-options: true
   code-tools: true
   embed-resources: true
+  page-layout: article
+  max-width: 1800px
+  message: false
 

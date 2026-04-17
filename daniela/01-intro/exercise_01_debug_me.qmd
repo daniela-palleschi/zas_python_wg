@@ -14,21 +14,26 @@ Read the error messages carefully -- python usually tells you exaction what is w
 
 ## Imports
 
-::: {.callout-note}
-### python version of `here`
-
-```{python}
-from pyprojroot import here
-```
-
-:::
-
 ```{python}
 # python                 # R equivalent
 import numpy as np       # baseR
 import pandas as pd      # tidyverse; mainly dplyr and tibble
 import seaborn as sns    # ggplot2
 ```
+
+::: {.callout-note}
+### python version of `here`
+
+```{python}
+from pyprojroot import here
+from pathlib import Path # to join folder path with /
+```
+
+```{python}
+print(here())
+```
+
+:::
 
 ```{r}
 #| code-fold: true
@@ -39,11 +44,10 @@ pacman::p_load(dplyr, tibble, ggplot2, readr, here)
 
 ## Load data
 
-Make sure you are running the script from the project root, or adjust the path below.
+Make sure you are running the script from the project root (using `pyprojroot`'s `here`). You can break the folder path into a list of strings to avoid the different slash directions between Microsoft and Mac (like with R's `here` package as well).
 
 ```{python}
-#| eval: false
-df = pd.read_csv("data/scores.csv")
+df = pd.read_csv(here() / "data" / "scores.csv")
 ```
 
 ```{r}
@@ -53,22 +57,16 @@ df <- read_csv(here("data","scores.csv"))
 ```
 
 ::: {.callout-note}
-### My fix
+### Alternative with `os`
 
-I don't have a working directory set. Do that.
+If I didn't have a working directory set, do that:
 
 ```{python}
 import os
 os.getcwd()
 ```
 
-Wrong, that wasn't the problem. The problem was that data isn't in the project parent node; it's nested within sessions/march27; but i can also load it in using here from pyprojroot which uses wherever a .git file is as the project root
-
-```{python}
-df = pd.read_csv(here("data/scores.csv"))
-```
-
-OR, change the wd to be the `sessions/march-27` folder. The equivalent to `setwd()` in python is:
+You'd need to make sure that your data is below this parent node. OR, change the wd to be the `sessions/march-27` folder. The equivalent to `setwd()` in python is:
 
 ```{python}
 #| eval: false

@@ -1,0 +1,139 @@
+---
+title: "Getting Set Up"
+subtitle: "ZAS Python Working Group | March 28, 2025"
+format: html
+---
+
+# 1 Survey Highlights
+
+Thanks to everyone who filled in the survey! Here is what we learned about our group:
+
+::: {.callout-note title="Experience"}
+Most of us have some R background and are Python beginners or intermediates. A few members work in both languages.
+:::
+
+::: {.callout-note title="Goals"}
+Top topics requested: data wrangling, visualisation, statistics/modelling, and automation of repetitive tasks.
+:::
+
+::: {.callout-note title="Format"}
+Preference for hands-on exercises over lectures. Mix of beginner-friendly content and domain-specific deep dives.
+:::
+
+→ The tentative programme on SharePoint reflects these preferences. It is flexible — let us know if you want to add or swap a topic.
+
+# 2 Environments & Package Management
+
+## Why do environments matter?
+
+An environment is an isolated Python installation with its own set of packages. This prevents conflicts between projects that need different versions of the same library.
+
+- Project A needs pandas 1.5, Project B needs pandas 2.0 — without environments, one breaks.
+- Environments make your work reproducible: share `environment.yml` and anyone can recreate it.
+
+## Two main approaches
+
+| | ✅ Recommended | Also common |
+|---|---|---|
+| **Manager** | `conda` (via Anaconda/Miniconda) | `venv` (built into Python) |
+| **Creates envs with** | `conda create -n myenv python=3.11` | `python -m venv myenv` |
+| **Installs packages** | `conda install pandas` or `pip install` | `pip install pandas` |
+| **Export env** | `conda env export > environment.yml` | `pip freeze > requirements.txt` |
+| **Best for** | Science / data work, manages non-Python deps | Lightweight, web, scripting |
+
+## Anaconda vs Miniconda vs conda
+
+- **Anaconda** — full installer with 250+ pre-installed packages and a GUI navigator. Good default for beginners.
+- **Miniconda** — minimal installer, just conda + Python. Faster, leaner, install only what you need.
+- **conda** — the command-line tool that ships with both. This is what you actually use.
+
+::: {.callout-tip title="Tip"}
+If you are installing fresh: Miniconda is recommended. Anaconda is fine too. Avoid mixing conda and pip installs within the same environment when possible.
+:::
+
+**Why avoid mixing conda and pip?**
+
+- `conda` and `pip` have separate dependency solvers — they do not communicate with each other.
+- When you `conda install` a package, conda carefully balances the whole dependency graph, including non-Python libraries (C, CUDA, etc.).
+- If you later `pip install` something in the same environment, pip can silently overwrite or downgrade conda-managed libraries — creating conflicts that are very hard to debug.
+- Safe rule of thumb: install everything you can via conda (or conda-forge) first. Only fall back to pip for packages not available there.
+- If you must use pip, always do conda installs first, pip installs last — and never go back to `conda install` after using pip in that environment.
+
+# 3 Which Terminal Should I Use?
+
+There are several ways to run Python commands — this confuses many beginners. Here is the quick guide:
+
+| | ✅ Recommended | Also common |
+|---|---|---|
+| **Terminal** | VS Code Terminal | Anaconda Prompt / cmd |
+| **What it is** | Shell embedded in VS Code | Standalone system terminals |
+| **Activates envs?** | Yes — automatically picks up selected env | Yes — manually: `conda activate myenv` |
+| **Recommended?** | Yes — stays in sync with your editor | Good fallback if VS Code misbehaves |
+| **Windows gotcha** | May default to PowerShell — switch to cmd if conda does not initialise | Anaconda Prompt is pre-configured |
+
+**Key rule: always check which environment is active before installing anything.**
+
+- In conda: look for `(myenv)` at the start of the prompt.
+- In VS Code: check the bottom status bar — it shows the active interpreter.
+
+# 4 Ways to Write & Run Python
+
+| | ✅ Recommended | Also common |
+|---|---|---|
+| **Format** | `.py` script | Jupyter Notebook (`.ipynb`) |
+| **Best for** | Reusable code, pipelines, libraries | Exploration, teaching, step-by-step analysis |
+| **Run with** | `python my_script.py` or play button | Browser / VS Code notebook view |
+| **Output stored?** | No (re-run to see output) | Yes — output saved in the file |
+| **Version control** | Clean diffs in git | Messy diffs (JSON with output blobs) |
+
+- **Quarto (`.qmd`)** — combines code, text, and output into polished documents (HTML, PDF, Word). Think R Markdown, but for Python and R. Great for reports.
+- **Jupyter in VS Code** — recommended: you get notebooks without opening a browser, plus all VS Code features.
+
+# 5 Recommended VS Code Extensions
+
+Install via the Extensions panel (`Ctrl+Shift+X`):
+
+**Essential**
+
+- `Python` (Microsoft)
+- `Pylance` (Microsoft) — fast type-checking and autocomplete
+- `Jupyter` (Microsoft) — run notebooks inside VS Code
+
+**Recommended**
+
+- `Ruff` — very fast linter/formatter, replaces flake8 + black
+- `GitLens` — visualise git history inline
+
+**Useful**
+
+- `Rainbow CSV` — colour-code CSV columns at a glance
+- `Even Better TOML` / `YAML` — syntax support for config files
+
+# 6 Editors at a Glance
+
+| | ✅ Recommended | Also common |
+|---|---|---|
+| **Editor** | VS Code | Positron / PyCharm / Spyder |
+| **Type** | General-purpose editor, highly extensible | Purpose-built IDEs |
+| **Python support** | Via extensions — excellent once set up | Built-in, less configuration needed |
+| **Free?** | Yes | Positron: yes. PyCharm CE: yes. Spyder: yes. |
+| **Best for** | Most people — versatile and widely used | See notes below |
+
+## Positron
+
+A new open-source IDE from Posit (the RStudio team). Designed specifically for data science in both R and Python — feels familiar if you come from RStudio. Still in active development (beta), but very promising.
+
+- Side-by-side R and Python environments.
+- Built-in data explorer (like RStudio's Environment pane).
+- Worth trying if you switch between R and Python regularly.
+
+## Quick picks
+
+- **VS Code** — best default choice for this group.
+- **Positron** — if you are a heavy R user, try it.
+- **Spyder** — MATLAB-like layout, good for scientists, but less actively developed.
+- **PyCharm** — powerful but heavy; Community Edition is free.
+
+---
+
+*Questions? Suggestions for future sessions? Reach out to Daniela & Šárka or post in the mailing list.*
