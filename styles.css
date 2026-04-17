@@ -1,11 +1,35 @@
 /* Python blocks */
-div.sourceCode:has(pre.python) {
-  background-color: #e8f4f8;
-  border-left: 4px solid #3776ab;
+div.sourceCode:has(pre.sourceCode.python) {
+  background-color: #fdf8e8;
+  border-left: 4px solid #f0c040;
+  position: relative;
+}
+
+div.sourceCode:has(pre.sourceCode.python)::before {
+  content: "Python";
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  font-size: 0.7em;
+  font-weight: bold;
+  color: #f0c040;
+  opacity: 1;
 }
 
 /* R blocks */
-div.sourceCode:has(pre.r) {
-  background-color: #f0f7e8;
-  border-left: 4px solid #146b17;
+div.sourceCode:has(pre.sourceCode.r) {
+  background-color: #e8f0f7;
+  border-left: 4px solid #4a90c4;
+  position: relative;
+}
+
+div.sourceCode:has(pre.sourceCode.r)::before {
+  content: "R";
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  font-size: 0.7em;
+  font-weight: bold;
+  color: #4a90c4;
+  opacity: 0.8;
 }
