@@ -91,6 +91,8 @@ def normalise(x):
     return (x - min(x)) / (max(x) - min(x))
 ```
 
+# Arithematic
+
 ```{r}
 #| eval: false
 normalised_scores <- normalise(scores)
