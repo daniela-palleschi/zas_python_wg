@@ -16,7 +16,9 @@ book:
         - daniela/02-basics/session2_handout.qmd
         - daniela/02-basics/cleaning-imdb-dataset.ipynb
         - daniela/02-basics/session2_exercise.ipynb
-
+    - part: "Reproducibility"
+      chapters:
+        - daniela/03-reproducibility/reproducibility.qmd
 format:
   html:
     css: styles.css
