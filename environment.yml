@@ -1,0 +1,8 @@
+name: zas_python_wg
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+prefix: /Users/danielapalleschi/miniconda3/envs/zas_python_wg
