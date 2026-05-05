@@ -282,13 +282,13 @@ kt(terminals,
 **Basic conda workflow:**
 
 ```{.bash filename="Terminal (bash / Git Bash / WSL)"}
-conda env list                               # list environments
-conda create -n zas-python-wg python=3.11   # create once
-conda activate zas-python-wg                 # activate
-conda info --envs                               # list environments
-conda install pandas matplotlib                # install
-conda env export --from-history > environment.yml  # record
-conda env create -f environment.yml            # restore (others)
+conda env list                                  # list all environments
+conda create -n zas-python-wg python=3.11       # create once
+conda activate zas-python-wg                    # activate
+conda info --envs                               # check active environment (asterisk = active)
+conda install pandas matplotlib                 # install packages
+conda env export --from-history > environment.yml  # record environment
+conda env create -f environment.yml             # restore (others)
 ```
 
 > **Positron / VS Code:** Command Palette -> *Python: Select Interpreter* -> choose your conda environment. The integrated terminal will use your active conda environment automatically.
@@ -341,6 +341,31 @@ kt(ide_tbl,
 ```
 
 ```{r}
+#| label: workflow-tip
+#| output: asis
+workflow_pdf <- "\\begin{tcolorbox}[colback=highlightbg, colframe=linkblue, arc=3pt, title={\\sffamily\\bfseries Your typical workflow}, fonttitle=\\bfseries\\small\\sffamily, coltitle=white, boxed title style={colback=linkblue}, breakable]
+\\small
+\\begin{enumerate}
+  \\item Open Positron (or VS Code)
+  \\item \\textbf{File $\\to$ Open Folder} $\\to$ navigate to your project folder
+  \\item Check the interpreter in the \\textbf{bottom status bar} -- it should show your conda environment name (e.g. \\texttt{zas-python-wg}). If not: Command Palette $\\to$ Python: Select Interpreter $\\to$ choose it
+  \\item Open the integrated terminal (\\texttt{Ctrl+`} or Terminal $\\to$ New Terminal) -- it should activate your conda environment automatically
+  \\item Verify: \\texttt{conda info --envs} (asterisk next to active env) and \\texttt{pwd} (correct folder)
+\\end{enumerate}
+\\end{tcolorbox}"
+
+workflow_docx <- "> **Your typical workflow**
+>
+> 1. Open Positron (or VS Code)
+> 2. **File -> Open Folder** -> navigate to your project folder
+> 3. Check the interpreter in the **bottom status bar** -- it should show your conda environment name (e.g. `zas-python-wg`). If not: Command Palette -> Python: Select Interpreter -> choose it
+> 4. Open the integrated terminal (`Ctrl+backtick` or Terminal -> New Terminal) -- it should activate your conda environment automatically
+> 5. Verify with `conda info --envs` (asterisk = active env) and `pwd` (correct folder)"
+
+if (is_pdf) cat(workflow_pdf) else cat(workflow_docx)
+```
+
+```{r}
 #| label: uv-callout
 #| output: asis
 if (is_pdf) {
@@ -390,13 +415,29 @@ See: \\url{https://docs.astral.sh/uv}
 
 ### Project-relative file paths
 
-Hardcoded absolute paths break on every machine except the one they were written on. The fix is to construct all paths relative to the project root.
+Hardcoded absolute paths break on every machine except the one they were written on. There are two good ways to fix this in Python.
+
+**Option 1: `pyprojroot` (recommended -- closest to `here::here()`)**
+
+Install once: `conda install pyprojroot` or `pip install pyprojroot`
+
+```{.python filename="Python"}
+from pyprojroot import here
+from pathlib import Path
+
+data_path   = here("data/raw/stimuli.csv")
+output_path = here("outputs/figures")
+```
+
+`pyprojroot` walks up from the current file until it finds a project root marker -- `.git`, `pyproject.toml`, `environment.yml`, etc. -- and anchors all paths there. This is the direct Python equivalent of `here::here()` and works correctly regardless of where the script lives in the project.
+
+**Option 2: `pathlib` (no extra install)**
 
 ```{.python filename="Python"}
 from pathlib import Path
 
 # __file__ is the path of the current script
-# .parent navigates up one folder at a time
+# .parent navigates up one folder at a time -- count carefully
 PROJECT_ROOT = Path(__file__).parent.parent
 
 data_path   = PROJECT_ROOT / "data" / "raw" / "stimuli.csv"
@@ -404,7 +445,7 @@ output_path = PROJECT_ROOT / "outputs" / "figures"
 output_path.mkdir(parents=True, exist_ok=True)  # create if needed
 ```
 
-This is the Python equivalent of `here::here()` in R. The path resolves correctly regardless of where the script is called from.
+This works without any extra packages but requires counting `.parent` calls correctly -- which breaks if you move the script to a different subfolder depth. Use `pyprojroot` if you want `here()`-style convenience.
 
 ---
 
@@ -470,7 +511,7 @@ kt(naming,
 
 ### README as a map
 
-Every project should answer three questions: what does this project do, how do I run it, and what do the outputs mean?
+Every project README should answer three questions: what does this project do, how do I run it, and what do the outputs mean?
 
 ```{.markdown filename="README.md"}
 # Project name
@@ -478,7 +519,7 @@ One sentence describing the study or task.
 
 ## Setup
 conda env create -f environment.yml
-conda activate zas-pythonistas
+conda activate zas_python_wg
 
 ## Running the analysis
 python scripts/01_clean-data.py
@@ -641,7 +682,7 @@ The biggest reproducibility risk in `.ipynb` files is **out-of-order execution**
 
 ### What `freeze: true` does in Quarto
 
-By default, Quarto re-runs all your code from scratch on every render -- correct for reproducibility, but slow for heavy computations like model fitting or EEG preprocessing. `freeze: true` changes this: Quarto **caches each chunk's output** and only re-runs a chunk when its source code actually changes.
+By default, Quarto re-runs all your code from scratch on every render -- correct for reproducibility, but slow for heavy computations like model fitting or preprocessing big datasets. `freeze: true` changes this: Quarto **caches each chunk's output** and only re-runs a chunk when its source code actually changes.
 
 - **First render:** runs everything, saves outputs into a `_freeze/` folder alongside your `.qmd`
 - **Subsequent renders:** skips unchanged chunks and reuses saved outputs
@@ -679,7 +720,7 @@ jupyter nbconvert --to script exploration.ipynb
 ex_a <- data.frame(
   Step = c("A1", "A2", "A3", "A4"),
   Task = c(
-    "Activate your conda environment: conda activate zas-pythonistas",
+    "Activate your conda environment: conda activate zas_python_wg",
     "Export it: conda env export > environment-full.yml -- open the file and inspect what is there",
     "Compare with the leaner version: conda env export --from-history > environment-minimal.yml -- what is the difference?",
     "Optional: try the venv equivalent in a separate terminal: python -m venv .venv && source .venv/bin/activate && pip install pandas && pip freeze > requirements.txt"
@@ -734,7 +775,7 @@ from pathlib import Path
 # -------------------------------------------------------
 # TODO: this path is broken -- fix it using pathlib
 # -------------------------------------------------------
-data_path = "/Users/replace-me/projects/zas-pythonistas/data/raw/sample.csv"
+data_path = "/Users/replace-me/projects/zas_python_wg/data/raw/sample.csv"
 
 df = pd.read_csv(data_path)
 print(f"Loaded {len(df)} rows")
@@ -783,7 +824,7 @@ ref <- data.frame(
     "environment.yml  or  requirements.txt  or  uv.lock",
     "conda env create -f environment.yml  or  pip install -r requirements.txt",
     "No automatic root -- use explicit Path(__file__) convention",
-    "Path(__file__).parent / ...",
+    "here(\"data/raw/file.csv\") via pyprojroot  or  Path(__file__).parent / ...",
     "random.seed(42)  +  numpy.random.seed(42)",
     ".qmd with jupyter: python3",
     "freeze: true in Quarto",

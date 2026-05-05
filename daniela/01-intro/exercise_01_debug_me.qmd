@@ -1,177 +1,848 @@
 ---
-title: "Debug me"
-engine: jupyter
-knitr: true
+title: "Reproducibility & project workflow in Python"
+subtitle: "ZAS Pythonistas working group"
+date: today
+date-format: "MMMM YYYY"
+format:
+  docx:
+    toc: false
+    number-sections: false
+    highlight-style: github
+  pdf:
+    toc: false
+    number-sections: false
+    highlight-style: github
+    geometry: "top=2cm, bottom=2cm, left=2cm, right=2cm"
+    fontsize: 10pt
+    papersize: a4
+    keep-tex: false
+    pdf-engine: xelatex
+    mainfont: "Helvetica Neue"
+    sansfont: "Helvetica Neue"
+    monofont: "Menlo"
+    colorlinks: true
+    linkcolor: linkblue
+    urlcolor: linkblue
+    include-in-header:
+      text: |
+        \usepackage{float}
+        \floatplacement{table}{H}
+        \usepackage{longtable}
+        \usepackage{xcolor}
+        \usepackage{colortbl}
+        \usepackage{tcolorbox}
+        \tcbuselibrary{skins, breakable}
+        \definecolor{linkblue}{HTML}{4472C4}
+        \definecolor{codebg}{HTML}{F3F3F3}
+        \definecolor{codeborder}{HTML}{BBBBBB}
+        \definecolor{labelterm}{HTML}{3C3C3C}
+        \definecolor{labelpython}{HTML}{3572A5}
+        \definecolor{labelyaml}{HTML}{CB171E}
+        \definecolor{labelmd}{HTML}{083FA1}
+        \definecolor{stripebg}{HTML}{F2F6FC}
+        \definecolor{headerbg}{HTML}{4472C4}
+        \definecolor{highlightbg}{HTML}{D9E8F7}
+execute:
+  echo: false
+  warning: false
+  message: false
 ---
 
-## Task {.unnumbered}
+```{r}
+#| label: setup
+#| output: false
+library(knitr)
+is_pdf <- knitr::is_latex_output()
 
-Run this script. Several things will break. Find and fi each error, one at a time.
+kt <- function(df,
+               col_names     = colnames(df),
+               col_widths    = NULL,
+               bold_col      = NULL,
+               red_col       = NULL,
+               green_col     = NULL,
+               highlight     = NULL,
+               highlight_col = "#D9E8F7") {
 
-::: {.callout-tip}
-Read the error messages carefully -- python usually tells you exaction what is wrong and on which line.
-:::
+  if (is_pdf) {
 
-## Imports
+    n_cols <- ncol(df)
 
-```{python}
-# python                 # R equivalent
-import numpy as np       # baseR
-import pandas as pd      # tidyverse; mainly dplyr and tibble
-import seaborn as sns    # ggplot2
+    # Fallback: equal column widths summing to 16.5cm (A4 minus 2cm margins each side)
+    if (is.null(col_widths))
+      col_widths <- rep(paste0(round(16.5 / n_cols, 2), "cm"), n_cols)
+
+    # p{} columns force text wrapping and avoid tabu/longtabu entirely
+    col_spec <- paste0("p{", col_widths, "}", collapse = "")
+
+    # Escape special LaTeX characters FIRST so backslashes in
+    # \textbf{} and \textcolor{} injected below are not double-escaped
+    df <- as.data.frame(lapply(df, function(x) {
+      x <- as.character(x)
+      x <- gsub("_",  "\\\\_",  x)   # underscore -- math subscript trigger
+      x <- gsub("&",  "\\\\&",  x)   # ampersand
+      x <- gsub("%",  "\\\\%",  x)   # percent
+      x <- gsub("#",  "\\\\#",  x)   # hash
+      x
+    }))
+
+    # Wrap cell values in LaTeX colour/bold commands AFTER escaping
+    wrap_col <- function(d, idx, cmd) {
+      d[[idx]] <- paste0(cmd, "{", d[[idx]], "}")
+      d
+    }
+    if (!is.null(bold_col))  df <- wrap_col(df, bold_col,  "\\textbf")
+    if (!is.null(red_col))   df <- wrap_col(df, red_col,   "\\textcolor[HTML]{993C1D}")
+    if (!is.null(green_col)) df <- wrap_col(df, green_col, "\\textcolor[HTML]{2E7D52}")
+
+    # Build raw LaTeX via kable — plain tabular, no longtable, no tabu
+    raw <- as.character(kable(df,
+      col.names = col_names,
+      format    = "latex",
+      booktabs  = FALSE,
+      linesep   = "",
+      longtable = FALSE,
+      escape    = FALSE
+    ))
+
+    # Swap kable's auto column spec for our explicit p{} widths
+    raw <- gsub(
+      "\\\\begin\\{tabular\\}\\{[^}]+\\}",
+      paste0("\\\\setlength\\{\\\\tabcolsep\\}\\{4pt\\}\n\\\\begin\\{tabular\\}\\{", col_spec, "\\}"),
+      raw
+    )
+
+    # Colour the header row: inject \rowcolor + \color after the first \hline
+    raw <- sub(
+      "(\\\\hline\n)([^\n]+\\\\\\\\\n)(\\\\hline)",
+      paste0("\\1\\\\rowcolor[HTML]{4472C4}\\\\color{white}\\\\bfseries\\\\small \\2\\3"),
+      raw
+    )
+
+    # Alternating stripe: walk body rows and colour every second one
+    lines      <- strsplit(raw, "\n")[[1]]
+    hline_pos  <- grep("^\\\\hline$", lines)
+    header_end <- if (length(hline_pos) >= 2) hline_pos[2] else NA
+
+    if (!is.na(header_end)) {
+      body      <- seq(header_end + 1, length(lines))
+      row_lines <- grep("\\\\\\\\", lines[body]) + header_end
+      even_rows <- row_lines[seq(2, length(row_lines), 2)]
+      lines[even_rows] <- paste0("\\rowcolor[HTML]{F2F6FC}", lines[even_rows])
+
+      if (!is.null(highlight) && highlight <= length(row_lines)) {
+        hl <- row_lines[highlight]
+        col_hex <- gsub("#", "", highlight_col)
+        lines[hl] <- sub(
+          "^(\\\\rowcolor[^}]*\\})?",
+          paste0("\\\\rowcolor[HTML]{", col_hex, "}"),
+          lines[hl]
+        )
+      }
+      raw <- paste(lines, collapse = "\n")
+    }
+
+    # Wrap in a [H] float with small font
+    raw <- paste0("\\begin{table}[H]\n\\small\n", raw, "\n\\end{table}")
+
+    structure(raw, class = "knit_asis", knit_meta = list())
+
+  } else {
+    # docx: plain kable only
+    kable(df, col.names = col_names)
+  }
+}
 ```
 
-::: {.callout-note}
-### python version of `here`
+## Session overview
 
-```{python}
-from pyprojroot import here
-from pathlib import Path # to join folder path with /
-```
+**Duration:** 90 minutes. **Format:** Discussion + live demo + hands-on exercise.
 
-```{python}
-print(here())
-```
+This session builds from general principles to Python-specific tools -- concepts that apply in any language first, then the specific tools and file formats you will use day-to-day in Python.
 
-:::
+---
+
+## Schedule
 
 ```{r}
-#| code-fold: true
-#| code-summary: "R equivalent"
-# install.packages("pacman")
-pacman::p_load(dplyr, tibble, ggplot2, readr, here)
-```
-
-## Load data
-
-Make sure you are running the script from the project root (using `pyprojroot`'s `here`). You can break the folder path into a list of strings to avoid the different slash directions between Microsoft and Mac (like with R's `here` package as well).
-
-```{python}
-df = pd.read_csv(here() / "data" / "scores.csv")
-```
-
-```{r}
-#| code-fold: true
-#| code-summary: "R equivalent"
-df <- read_csv(here("data","scores.csv"))
-```
-
-::: {.callout-note}
-### Alternative with `os`
-
-If I didn't have a working directory set, do that:
-
-```{python}
-import os
-os.getcwd()
-```
-
-You'd need to make sure that your data is below this parent node. OR, change the wd to be the `sessions/march-27` folder. The equivalent to `setwd()` in python is:
-
-```{python}
-#| eval: false
-os.chdir("sessions/march-27")
-```
-
-I will *not* use this option though. My preferred project structure would have `data/` in the project folder head.
-
-
-:::
-
-## Quick look
-
-```{python}
-print("Shape:", df.shape)
-print(df.head())
-```
-
-```{r}
-#| code-fold: true
-#| code-summary: "R equivalent"
-length(df)
-nrow(df)
-head(df)
-```
-
-## Filter rows
-
-```{python}
-#| eval: false
-# Keep only rows where condition is TRUE
-good_rows <- df["score"] > 50        
-
-print("Rows passing filter:", len(good_rows))
-```
-
-My fix: change `<-` (R syntax) to `=` (also works in R).
-
-```{python}
-# Keep only rows where condition is TRUE
-good_rows = df[df["score"] > 50]    
-
-print("Rows passing filter:", len(good_rows))
-```
-
-
-```{r}
-#| code-fold: true
-#| code-summary: "R equivalent"
-good_rows <-
-    df |>
-    filter(score > 50)
-
-paste("Rows passing filter:", nrow(good_rows))
-```
-
-## Compute a summary
-
-```{python}
-mean_score = df["score"].mean()
-max_score  = df["score"].max()
-
-print("Mean score:", round(mean_score, 2)) 
-print("Max score: ", max_score)
-```
-
-```{r}
-#| code-fold: true
-#| code-summary: "R equivalent"
-mean_score <- mean(df$score)
-max_score <- max(df$score)
-
-paste("Mean score:", round(mean_score,2))
-paste("Max score:", max_score)
-```
-
-## Add a new column
-
-Fix: wrap whole expression in brackets and remove forward slash.
-
-```{python}
-# Normalise scores to 0–1 range
-df["score_norm"] = (
-    (df["score"] - df["score"].min()) /
-    (df["score"].max() - df["score"].min()) 
+#| label: tbl-schedule
+schedule <- data.frame(
+  Section = c(
+    "1. What is reproducibility?",
+    "2. Virtual environments & file paths",
+    "3. Naming conventions & folder structure",
+    "4. Version control with git",
+    "5. Quarto vs. Jupyter notebooks",
+    "6. Hands-on exercise",
+    "7. Wrap-up & next topic vote"
+  ),
+  Scope = c(
+    "Language-agnostic",
+    "Python-specific",
+    "Language-agnostic",
+    "Language-agnostic",
+    "Python-specific",
+    "Python",
+    "--"
+  ),
+  Time = c("8 min", "18 min", "12 min", "10 min", "17 min", "18 min", "7 min")
 )
+kt(schedule,
+   col_widths = c("9cm", "5cm", "2cm"),
+   highlight  = 6)
+```
 
+---
+
+## 1 - What is reproducibility?
+
+Reproducibility means someone else -- or future you -- can re-run your analysis and get the same result. It operates at two levels:
+
+- **Environment reproducibility:** the same packages and versions are installed. Your code does not break because a collaborator has a different version of pandas.
+- **Workflow reproducibility:** the same code runs in the same order and produces the same outputs. No mystery variables, no deleted raw files, no steps that exist only in someone's memory.
+
+Neither layer is sufficient alone. A perfectly locked environment does not help if the script requires you to run cell 7 before cell 3. Clean, ordered code does not help if it requires a package version nobody can install anymore.
+
+**Common failure modes:** "it works on my machine" *(environment)*; raw data was overwritten and the analysis cannot be re-run *(workflow)*; a notebook gives different results depending on the order cells were run *(workflow)*; a script uses an absolute path like `/Users/name/projects/...` that breaks on every other machine *(workflow)*.
+
+Reproducibility is a spectrum -- the goal is not perfection from day one, but deliberate choices that reduce friction for your future self and collaborators.
+
+---
+
+## 2 - Virtual environments & file paths
+
+### Virtual environments
+
+A virtual environment is an isolated Python installation scoped to a single project -- the R equivalent of an `renv` library. Do not install packages into your global Python.
+
+**This working group uses conda.** venv + pip is shown as a lighter alternative for pure-Python projects.
+
+```{r}
+#| label: tbl-conda
+conda_tbl <- data.frame(
+  Question = c(
+    "Create an environment",
+    "Install packages",
+    "Record env for sharing",
+    "Restore environment",
+    "Lockfile (approx. renv.lock)",
+    "When to use"
+  ),
+  conda = c(
+    "conda create -n my-env python=3.11",
+    "conda install pandas  or  pip install pandas",
+    "conda env export --from-history > environment.yml",
+    "conda env create -f environment.yml",
+    "environment.yml or conda-lock for full pinning",
+    "Non-Python deps, HPC clusters, mixed R+Python"
+  ),
+  venv_pip = c(
+    "python -m venv .venv",
+    "pip install pandas",
+    "pip freeze > requirements.txt",
+    "pip install -r requirements.txt",
+    "requirements.txt or pyproject.toml + uv.lock",
+    "Pure-Python projects, lighter setup"
+  )
+)
+kt(conda_tbl,
+   col_names  = c("", "conda (current setup)", "venv + pip (alternative)"),
+   col_widths = c("3.5cm", "6.5cm", "6.5cm"),
+   bold_col   = 1)
+```
+
+> **`--from-history` vs full export:** `conda env export` pins every package including transitive dependencies and platform-specific build strings, making it non-portable across operating systems. `--from-history` records only what you explicitly installed, letting conda resolve the rest per platform. For sharing within a team, `--from-history` is usually the better choice.
+
+**A note on terminals: Mac vs Windows**
+
+All code in this handout is written for **bash** (the shell used on macOS and Linux). Windows uses PowerShell by default, which has different syntax. Windows users should use one of the following so the commands here work as written:
+
+```{r}
+#| label: tbl-terminals
+#| output: asis
+terminals <- data.frame(
+  Option = c(
+    "Git Bash",
+    "WSL (Windows Subsystem for Linux)",
+    "Positron / VS Code integrated terminal",
+    "Anaconda Prompt"
+  ),
+  Description = c(
+    "Installs with Git for Windows. Gives a full bash shell. Simplest option for this session.",
+    "A full Linux environment inside Windows. More powerful but requires one-time setup.",
+    "Auto-uses bash or Git Bash if configured. Conda commands work out of the box.",
+    "A Windows terminal pre-configured for conda. Conda commands work but bash syntax may not."
+  ),
+  Recommended = c("Yes -- simplest", "Optional", "Yes", "Conda only")
+)
+kt(terminals,
+   col_names  = c("Option", "Description", "For this session"),
+   col_widths = c("3.5cm", "9.5cm", "3cm"))
+```
+
+**Basic conda workflow:**
+
+```{.bash filename="Terminal (bash / Git Bash / WSL)"}
+conda env list                                  # list all environments
+conda create -n zas-python-wg python=3.11       # create once
+conda activate zas-python-wg                    # activate
+conda info --envs                               # check active environment (asterisk = active)
+conda install pandas matplotlib                 # install packages
+conda env export --from-history > environment.yml  # record environment
+conda env create -f environment.yml             # restore (others)
+```
+
+> **Positron / VS Code:** Command Palette -> *Python: Select Interpreter* -> choose your conda environment. The integrated terminal will use your active conda environment automatically.
+
+### IDEs: VS Code and Positron
+
+Both VS Code and Positron are built on the same engine (VS Code's core), so the interface is nearly identical. Positron is Posit's fork tuned for data science: it adds a persistent Variables pane, a Console panel, and a Plots viewer -- all familiar from RStudio. For this working group either IDE works; Positron is recommended if you are coming from RStudio.
+
+```{r}
+#| label: tbl-ide
+ide_tbl <- data.frame(
+  Feature = c(
+    "Built on",
+    "Python interpreter selection",
+    "Environment activation",
+    "Variables pane",
+    "Console panel",
+    "Plots viewer",
+    "Notebook support",
+    "R support",
+    "Recommended for"
+  ),
+  VSCode = c(
+    "VS Code core",
+    "Command Palette -> Python: Select Interpreter",
+    "Auto-activates .venv or conda env in workspace",
+    "Via Python extension (limited)",
+    "Integrated terminal only",
+    "Via Jupyter extension",
+    "Full .ipynb support",
+    "Via R extension",
+    "General development, large teams"
+  ),
+  Positron = c(
+    "VS Code core (Posit fork)",
+    "Same -- Command Palette -> Python: Select Interpreter",
+    "Same -- auto-activates on project open",
+    "Built-in, always visible (like RStudio)",
+    "Built-in, persistent (like RStudio)",
+    "Built-in viewer pane",
+    "Full .ipynb support",
+    "First-class, built-in",
+    "Data science, R users moving to Python"
+  )
+)
+kt(ide_tbl,
+   col_names  = c("", "VS Code", "Positron"),
+   col_widths = c("3.5cm", "6.5cm", "6cm"),
+   bold_col   = 1)
 ```
 
 ```{r}
-#| code-fold: true
-#| code-summary: "R equivalent"
+#| label: workflow-tip
+#| output: asis
+workflow_pdf <- "\\begin{tcolorbox}[colback=highlightbg, colframe=linkblue, arc=3pt, title={\\sffamily\\bfseries Your typical workflow}, fonttitle=\\bfseries\\small\\sffamily, coltitle=white, boxed title style={colback=linkblue}, breakable]
+\\small
+\\begin{enumerate}
+  \\item Open Positron (or VS Code)
+  \\item \\textbf{File $\\to$ Open Folder} $\\to$ navigate to your project folder
+  \\item Check the interpreter in the \\textbf{bottom status bar} -- it should show your conda environment name (e.g. \\texttt{zas-python-wg}). If not: Command Palette $\\to$ Python: Select Interpreter $\\to$ choose it
+  \\item Open the integrated terminal (\\texttt{Ctrl+`} or Terminal $\\to$ New Terminal) -- it should activate your conda environment automatically
+  \\item Verify: \\texttt{conda info --envs} (asterisk next to active env) and \\texttt{pwd} (correct folder)
+\\end{enumerate}
+\\end{tcolorbox}"
 
-df$score_norm = (df$score - min(df$score)) / (max(df$score) - min(df$score))
-```
+workflow_docx <- "> **Your typical workflow**
+>
+> 1. Open Positron (or VS Code)
+> 2. **File -> Open Folder** -> navigate to your project folder
+> 3. Check the interpreter in the **bottom status bar** -- it should show your conda environment name (e.g. `zas-python-wg`). If not: Command Palette -> Python: Select Interpreter -> choose it
+> 4. Open the integrated terminal (`Ctrl+backtick` or Terminal -> New Terminal) -- it should activate your conda environment automatically
+> 5. Verify with `conda info --envs` (asterisk = active env) and `pwd` (correct folder)"
 
-# Plot
-
-```{python}
-sns.histplot(data = df, x = "score_norm")
+if (is_pdf) cat(workflow_pdf) else cat(workflow_docx)
 ```
 
 ```{r}
-#| code-fold: true
-#| code-summary: "R equivalent"
+#| label: uv-callout
+#| output: asis
+if (is_pdf) {
+  cat("\\begin{tcolorbox}[colback=highlightbg, colframe=linkblue, arc=3pt,
+    title={\\sffamily\\bfseries uv -- a faster modern alternative worth knowing about},
+    fonttitle=\\bfseries\\small\\sffamily, coltitle=white,
+    boxed title style={colback=linkblue}, breakable]
+\\small
+\\texttt{uv} is a package and project manager for Python written in Rust (by the team behind \\texttt{ruff}).
+It replaces venv, pip, pip-tools, and pyenv with a single tool and is 10-100x faster than pip for installs.
 
-hist(df$score_norm)
+\\medskip
+\\textbf{What makes it different from venv + pip:}
+\\begin{itemize}
+  \\item Generates a proper lockfile (\\texttt{uv.lock}) with full dependency graph resolution -- a much closer analogue to \\texttt{renv.lock} than \\texttt{pip freeze} is
+  \\item Manages Python versions itself: \\texttt{uv python install 3.12} -- no separate pyenv needed
+  \\item Scaffolds new projects: \\texttt{uv init my-project}
+  \\item Runs scripts without manual activation: \\texttt{uv run script.py}
+\\end{itemize}
+
+\\medskip
+\\textbf{Basic workflow (Terminal):}
+\\begin{verbatim}
+uv init my-project        # scaffold project + pyproject.toml
+cd my-project
+uv add pandas matplotlib  # install + update lockfile automatically
+uv sync                   # restore environment from uv.lock
+\\end{verbatim}
+
+See: \\url{https://docs.astral.sh/uv}
+\\end{tcolorbox}")
+} else {
+  cat("> **uv -- a faster modern alternative worth knowing about**
+>
+> `uv` is a package and project manager for Python written in Rust (by the team behind `ruff`).
+> It replaces venv, pip, pip-tools, and pyenv with a single tool and is 10-100x faster than pip.
+>
+> Key differences from venv + pip: generates a proper lockfile (`uv.lock`, closer to `renv.lock` than `pip freeze`);
+> manages Python versions itself (`uv python install 3.12`); scaffolds projects (`uv init my-project`);
+> runs scripts without activation (`uv run script.py`).
+>
+> Basic workflow: `uv init my-project` / `uv add pandas matplotlib` / `uv sync`
+>
+> See: <https://docs.astral.sh/uv>")
+}
 ```
+
+### Project-relative file paths
+
+Hardcoded absolute paths break on every machine except the one they were written on. There are two good ways to fix this in Python.
+
+**Option 1: `pyprojroot` (recommended -- closest to `here::here()`)**
+
+Install once: `conda install pyprojroot` or `pip install pyprojroot`
+
+```{.python filename="Python"}
+from pyprojroot import here
+from pathlib import Path
+
+data_path   = here("data/raw/stimuli.csv")
+output_path = here("outputs/figures")
+```
+
+`pyprojroot` walks up from the current file until it finds a project root marker -- `.git`, `pyproject.toml`, `environment.yml`, etc. -- and anchors all paths there. This is the direct Python equivalent of `here::here()` and works correctly regardless of where the script lives in the project.
+
+**Option 2: `pathlib` (no extra install)**
+
+```{.python filename="Python"}
+from pathlib import Path
+
+# __file__ is the path of the current script
+# .parent navigates up one folder at a time -- count carefully
+PROJECT_ROOT = Path(__file__).parent.parent
+
+data_path   = PROJECT_ROOT / "data" / "raw" / "stimuli.csv"
+output_path = PROJECT_ROOT / "outputs" / "figures"
+output_path.mkdir(parents=True, exist_ok=True)  # create if needed
+```
+
+This works without any extra packages but requires counting `.parent` calls correctly -- which breaks if you move the script to a different subfolder depth. Use `pyprojroot` if you want `here()`-style convenience.
+
+---
+
+## 3 - Naming conventions & folder structure
+
+These conventions apply in any language. Consistent structure makes projects navigable by collaborators and comprehensible to your future self.
+
+### Recommended folder layout
+
+```{.bash filename="Project structure"}
+my-project/
+  data/
+    raw/          # original data -- never modified
+    processed/    # derived data, reproducible from raw
+  scripts/        # numbered analysis scripts
+  notebooks/      # exploratory .ipynb files
+  outputs/
+    figures/
+    tables/
+  docs/           # manuscripts, protocols, notes
+  environment.yml # conda environment (or requirements.txt)
+  .gitignore
+  README.md
+```
+
+**Raw data is sacred.** Never overwrite it, never modify it in place. All transformations happen in code and produce outputs in `data/processed/`.
+
+### File naming
+
+```{r}
+#| label: tbl-naming
+naming <- data.frame(
+  Rule = c(
+    "Lowercase only",
+    "No spaces",
+    "Date-prefix versioned outputs",
+    "Verb-first for scripts",
+    "Zero-pad numbered scripts",
+    "Be specific"
+  ),
+  Avoid = c(
+    "My Analysis.py",
+    "model results final.csv",
+    "results.csv",
+    "data.py",
+    "1_clean.py, 10_model.py",
+    "analysis.py, data2.csv"
+  ),
+  Prefer = c(
+    "my-analysis.py",
+    "model-results-final.csv",
+    "2025-05-04_model-results.csv",
+    "01_clean-data.py",
+    "01_clean.py, 10_model.py",
+    "01_clean-eyetracking.py"
+  )
+)
+kt(naming,
+   col_widths = c("4cm", "6cm", "6cm"),
+   red_col    = 2,
+   green_col  = 3)
+```
+
+### README as a map
+
+Every project should answer three questions: what does this project do, how do I run it, and what do the outputs mean?
+
+```{.markdown filename="README.md"}
+# Project name
+One sentence describing the study or task.
+
+## Setup
+conda env create -f environment.yml
+conda activate zas-pythonistas
+
+## Running the analysis
+python scripts/01_clean-data.py
+python scripts/02_fit-model.py
+
+## Outputs
+outputs/figures/  -- all plots, referenced in the manuscript
+outputs/tables/   -- model results tables
+```
+
+---
+
+## 4 - Version control with git
+
+Git tracks changes to your files over time, so you can see what changed, when, and why -- and roll back if something breaks. It is language-agnostic and works for any text-based project. GitHub (and GitLab, Codeberg, etc.) are hosting platforms for git repositories; git itself runs entirely on your local machine.
+
+### Core concepts
+
+- **Repository (repo):** a folder tracked by git, containing your project and its full history
+- **Commit:** a saved snapshot of your project at a point in time, with a message describing what changed
+- **Staging area:** a holding zone where you choose exactly which changes to include in the next commit -- you do not have to commit everything at once
+- **Branch:** a parallel version of the project where you can develop a feature or fix without affecting the main version (more on this below)
+
+### The basic workflow
+
+```{.bash filename="Terminal"}
+# --- One-time setup ---
+git config --global user.name  "Your Name"
+git config --global user.email "you@example.com"
+
+# --- Start tracking a project ---
+git init                        # initialise a new repo in the current folder
+
+# --- Day-to-day workflow ---
+git status                      # see what has changed
+git add scripts/01_analyse.py   # stage a specific file
+git add .                       # stage everything (use carefully)
+git commit -m "fix: use relative paths in analysis script"
+
+# --- Review history ---
+git log --oneline               # compact list of past commits
+git diff                        # see unstaged changes line by line
+```
+
+### Writing useful commit messages
+
+A good commit message completes the sentence "If applied, this commit will...". Use a short imperative verb phrase: `add`, `fix`, `update`, `remove`. Keep it under 72 characters.
+
+```{r}
+#| label: tbl-commits
+commits <- data.frame(
+  Avoid = c(
+    "fixed stuff",
+    "update",
+    "changes",
+    "asdfgh"
+  ),
+  Prefer = c(
+    "fix: use relative paths in analysis script",
+    "add: conda environment file and README setup instructions",
+    "remove: hardcoded absolute paths from all scripts",
+    "refactor: split data cleaning into separate script"
+  )
+)
+kt(commits,
+   col_widths = c("4cm", "12.5cm"),
+   red_col    = 1,
+   green_col  = 2)
+```
+
+### What to put in .gitignore
+
+```{.bash filename=".gitignore"}
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Conda
+.conda/
+
+# Secrets -- never commit these
+.env
+*.key
+
+# Large data files (store elsewhere, e.g. OSF or NAS)
+data/raw/
+*.csv
+*.edf
+*.mat
+```
+
+### A note on branching
+
+Branches let you work on a new feature or experiment without touching the main version of your project. When the work is ready, you merge it back. For solo projects, you may not need branches at all -- a clean linear commit history is fine. For collaborative projects, a simple convention is: keep `main` stable and do new work on a named branch.
+
+```{.bash filename="Terminal"}
+git branch feature/add-preprocessing   # create a branch
+git checkout feature/add-preprocessing # switch to it
+                                        # (or: git checkout -b name, to do both at once)
+git checkout main                       # switch back to main
+git merge feature/add-preprocessing    # merge when ready
+```
+
+We will cover branching and collaborative workflows (pull requests, merge conflicts) in a future session.
+
+---
+
+## 5 - Quarto vs. Jupyter notebooks
+
+### They are not competitors
+
+Quarto *uses* Jupyter as its execution engine -- adding `jupyter: python3` to a `.qmd` header tells Quarto to call Jupyter to run your code. The real choice is between two **file formats**:
+
+```{r}
+#| label: tbl-formats
+formats <- data.frame(
+  Dimension = c(
+    "File format",
+    "Execution order",
+    "Kernel state",
+    "Git diffs",
+    "Output storage",
+    "Multi-format export",
+    "Inline computed values",
+    "Best for"
+  ),
+  Notebook = c(
+    ".ipynb (JSON)",
+    "Any order -- cells run independently",
+    "Persists between cells; can be stale",
+    "Noisy -- outputs embedded in JSON",
+    "Stored inside the file",
+    "Requires nbconvert + manual steps",
+    "Not straightforward",
+    "Exploration, iteration, teaching"
+  ),
+  Quarto = c(
+    ".qmd (plain text)",
+    "Always top-to-bottom, fresh process",
+    "No persistent state between renders",
+    "Clean -- plain text only",
+    "Separated from source",
+    "Built-in: HTML, Word, PDF, slides",
+    "`{python} round(val, 2)`",
+    "Reports, papers, shared outputs"
+  )
+)
+kt(formats,
+   col_names  = c("", ".ipynb notebook", ".qmd (Quarto)"),
+   col_widths = c("3.5cm", "6.5cm", "6.5cm"),
+   bold_col   = 1)
+```
+
+### The hidden state problem in notebooks
+
+The biggest reproducibility risk in `.ipynb` files is **out-of-order execution**. Jupyter remembers every variable set during a session, even from cells you have deleted or moved. A notebook that appears to work may depend on a variable set hours ago in a cell that no longer exists. The only reliable check is *Kernel -> Restart & Run All* before sharing -- and people often forget.
+
+### What `freeze: true` does in Quarto
+
+By default, Quarto re-runs all your code from scratch on every render -- correct for reproducibility, but slow for heavy computations like model fitting or EEG preprocessing. `freeze: true` changes this: Quarto **caches each chunk's output** and only re-runs a chunk when its source code actually changes.
+
+- **First render:** runs everything, saves outputs into a `_freeze/` folder alongside your `.qmd`
+- **Subsequent renders:** skips unchanged chunks and reuses saved outputs
+- **After editing a chunk:** only that chunk re-runs
+
+Committing `_freeze/` to git means collaborators can render the document and see your outputs without needing your data or compute environment.
+
+```{.yaml filename="_quarto.yml"}
+execute:
+  freeze: true
+```
+
+> **R parallel:** `freeze: true` is roughly analogous to `knitr cache = TRUE` in R Markdown, but more reliable -- it caches at the file level, tracks source changes explicitly, and plays well with git.
+
+### A practical two-stage workflow
+
+Use notebooks for the messy exploratory work. Once the approach is settled, move clean code into a `.qmd` for the shareable output.
+
+```{.bash filename="Terminal"}
+# Extract clean code from a notebook when you are ready
+jupyter nbconvert --to script exploration.ipynb
+# produces exploration.py -- paste the useful parts into your .qmd
+```
+
+---
+
+## 6 - Hands-on exercise
+
+**Setup:** the group repo is already cloned and your conda environment is active. The repo contains `scripts/01_analyse.py` (a short script with a reproducibility problem) and `environment.yml`.
+
+### Part A - Dependency management
+
+```{r}
+#| label: tbl-exercise-a
+ex_a <- data.frame(
+  Step = c("A1", "A2", "A3", "A4"),
+  Task = c(
+    "Activate your conda environment: conda activate zas-pythonistas",
+    "Export it: conda env export > environment-full.yml -- open the file and inspect what is there",
+    "Compare with the leaner version: conda env export --from-history > environment-minimal.yml -- what is the difference?",
+    "Optional: try the venv equivalent in a separate terminal: python -m venv .venv && source .venv/bin/activate && pip install pandas && pip freeze > requirements.txt"
+  )
+)
+kt(ex_a, col_widths = c("1.2cm", "15.3cm"))
+```
+
+### Part B - Project-relative file paths
+
+Open `scripts/01_analyse.py`. It contains a hardcoded absolute path that breaks on every machine except the one it was written on.
+
+```{r}
+#| label: tbl-exercise-b
+ex_b <- data.frame(
+  Step = c("B1", "B2", "B3"),
+  Task = c(
+    "Run the script and read the error: python scripts/01_analyse.py",
+    "Fix the broken path using pathlib so it resolves relative to the project root (see the pathlib pattern on this handout)",
+    "Run the script again to confirm it works: python scripts/01_analyse.py"
+  )
+)
+kt(ex_b, col_widths = c("1.2cm", "15.3cm"))
+```
+
+### Part C - Git hygiene
+
+```{r}
+#| label: tbl-exercise-c
+ex_c <- data.frame(
+  Step = c("C1", "C2", "C3", "Stretch"),
+  Task = c(
+    "Check what git would currently commit: git status -- notice anything that should not be there?",
+    "Create a .gitignore that excludes: __pycache__/, *.pyc, .ipynb_checkpoints/, .venv/ (if created in A4)",
+    "Stage your fixed script and .gitignore and commit with a descriptive message",
+    "Move the output of 01_analyse.py into a .qmd file and render it to HTML with Quarto"
+  )
+)
+kt(ex_c,
+   col_widths = c("1.5cm", "15cm"),
+   highlight  = 4)
+```
+
+### Skeleton script for the repo
+
+Add this as `scripts/01_analyse.py` before the session. Also commit a small `data/raw/sample.csv` with a few rows of dummy data.
+
+```{.python filename="scripts/01_analyse.py"}
+import pandas as pd
+from pathlib import Path
+
+# -------------------------------------------------------
+# TODO: this path is broken -- fix it using pathlib
+# -------------------------------------------------------
+data_path = "/Users/replace-me/projects/zas-pythonistas/data/raw/sample.csv"
+
+df = pd.read_csv(data_path)
+print(f"Loaded {len(df)} rows")
+print(df.describe())
+```
+
+---
+
+## R to Python parallels
+
+```{r}
+#| label: tbl-reference
+ref <- data.frame(
+  Concept = c(
+    "IDE",
+    "Isolated environment",
+    "Package install",
+    "Dependency lockfile",
+    "Restore environment",
+    "Project root",
+    "Project-relative paths",
+    "Set random seed",
+    "Dynamic report format",
+    "Freeze / cache computations",
+    "Inline computed value",
+    "Version control"
+  ),
+  R = c(
+    "RStudio / Positron",
+    "renv library (.Rprofile)",
+    "install.packages() / pak::pak()",
+    "renv.lock",
+    "renv::restore()",
+    ".Rproj file sets working directory",
+    "here::here()",
+    "set.seed(42)",
+    ".Rmd or .qmd",
+    "knitr cache = TRUE",
+    "`r round(val, 2)`",
+    "git (same)"
+  ),
+  Python = c(
+    "Positron / VS Code",
+    "conda env  or  .venv (venv)",
+    "conda install / pip install",
+    "environment.yml  or  requirements.txt  or  uv.lock",
+    "conda env create -f environment.yml  or  pip install -r requirements.txt",
+    "No automatic root -- use explicit Path(__file__) convention",
+    "here(\"data/raw/file.csv\") via pyprojroot  or  Path(__file__).parent / ...",
+    "random.seed(42)  +  numpy.random.seed(42)",
+    ".qmd with jupyter: python3",
+    "freeze: true in Quarto",
+    "`{python} round(val, 2)`",
+    "git (same)"
+  )
+)
+kt(ref, col_widths = c("3.8cm", "4.8cm", "7.9cm"))
+```
+
+---
+
+## Resources
+
+- **pythRon book** (ZAS internal): R/Python concepts side-by-side with worked examples
+- **Quarto + Python:** [quarto.org/docs/computations/python.html](https://quarto.org/docs/computations/python.html)
+- **Quarto freeze:** [quarto.org/docs/projects/code-execution.html#freeze](https://quarto.org/docs/projects/code-execution.html#freeze)
+- **uv:** [docs.astral.sh/uv](https://docs.astral.sh/uv)
+- **Pro Git book (free):** [git-scm.com/book/en/v2](https://git-scm.com/book/en/v2)
+- **Real Python -- virtual environments primer:** [realpython.com/python-virtual-environments-a-primer](https://realpython.com/python-virtual-environments-a-primer/)
+- **The Turing Way** -- community handbook for reproducible research: [the-turing-way.netlify.app](https://the-turing-way.netlify.app)
