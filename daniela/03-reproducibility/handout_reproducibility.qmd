@@ -29,6 +29,7 @@ format:
         \floatplacement{table}{H}
         \usepackage{longtable}
         \usepackage{xcolor}
+        \usepackage{colortbl}
         \usepackage{tcolorbox}
         \tcbuselibrary{skins, breakable}
         \definecolor{linkblue}{HTML}{4472C4}
@@ -52,7 +53,6 @@ execute:
 #| output: false
 library(knitr)
 is_pdf <- knitr::is_latex_output()
-if (is_pdf) library(kableExtra)
 
 kt <- function(df,
                col_names     = colnames(df),
@@ -62,38 +62,94 @@ kt <- function(df,
                green_col     = NULL,
                highlight     = NULL,
                highlight_col = "#D9E8F7") {
+
   if (is_pdf) {
-    k <- kable(df,
+
+    n_cols <- ncol(df)
+
+    # Fallback: equal column widths summing to 16.5cm (A4 minus 2cm margins each side)
+    if (is.null(col_widths))
+      col_widths <- rep(paste0(round(16.5 / n_cols, 2), "cm"), n_cols)
+
+    # p{} columns force text wrapping and avoid tabu/longtabu entirely
+    col_spec <- paste0("p{", col_widths, "}", collapse = "")
+
+    # Escape special LaTeX characters FIRST so backslashes in
+    # \textbf{} and \textcolor{} injected below are not double-escaped
+    df <- as.data.frame(lapply(df, function(x) {
+      x <- as.character(x)
+      x <- gsub("_",  "\\\\_",  x)   # underscore -- math subscript trigger
+      x <- gsub("&",  "\\\\&",  x)   # ampersand
+      x <- gsub("%",  "\\\\%",  x)   # percent
+      x <- gsub("#",  "\\\\#",  x)   # hash
+      x
+    }))
+
+    # Wrap cell values in LaTeX colour/bold commands AFTER escaping
+    wrap_col <- function(d, idx, cmd) {
+      d[[idx]] <- paste0(cmd, "{", d[[idx]], "}")
+      d
+    }
+    if (!is.null(bold_col))  df <- wrap_col(df, bold_col,  "\\textbf")
+    if (!is.null(red_col))   df <- wrap_col(df, red_col,   "\\textcolor[HTML]{993C1D}")
+    if (!is.null(green_col)) df <- wrap_col(df, green_col, "\\textcolor[HTML]{2E7D52}")
+
+    # Build raw LaTeX via kable — plain tabular, no longtable, no tabu
+    raw <- as.character(kable(df,
       col.names = col_names,
+      format    = "latex",
       booktabs  = FALSE,
       linesep   = "",
-      longtable = TRUE,
-      format    = "latex"
-    ) |>
-      kable_styling(
-        latex_options = c("striped", "repeat_header"),
-        full_width    = FALSE,   # must be FALSE to avoid longtabu / "dimension too large"
-        font_size     = 8,
-        stripe_color  = "#F2F6FC"
-      ) |>
-      row_spec(0, background = "#4472C4", color = "white", bold = TRUE)
-    # When full_width = FALSE, we must set every column width explicitly
-    # so the table still spans the page. Fallback to equal split if not supplied.
-    n_cols <- ncol(df)
-    if (is.null(col_widths)) {
-      col_widths <- rep(paste0(round(16.5 / n_cols, 2), "cm"), n_cols)
+      longtable = FALSE,
+      escape    = FALSE
+    ))
+
+    # Swap kable's auto column spec for our explicit p{} widths
+    raw <- gsub(
+      "\\\\begin\\{tabular\\}\\{[^}]+\\}",
+      paste0("\\\\setlength\\{\\\\tabcolsep\\}\\{4pt\\}\n\\\\begin\\{tabular\\}\\{", col_spec, "\\}"),
+      raw
+    )
+
+    # Colour the header row: inject \rowcolor + \color after the first \hline
+    raw <- sub(
+      "(\\\\hline\n)([^\n]+\\\\\\\\\n)(\\\\hline)",
+      paste0("\\1\\\\rowcolor[HTML]{4472C4}\\\\color{white}\\\\bfseries\\\\small \\2\\3"),
+      raw
+    )
+
+    # Alternating stripe: walk body rows and colour every second one
+    lines      <- strsplit(raw, "\n")[[1]]
+    hline_pos  <- grep("^\\\\hline$", lines)
+    header_end <- if (length(hline_pos) >= 2) hline_pos[2] else NA
+
+    if (!is.na(header_end)) {
+      body      <- seq(header_end + 1, length(lines))
+      row_lines <- grep("\\\\\\\\", lines[body]) + header_end
+      even_rows <- row_lines[seq(2, length(row_lines), 2)]
+      lines[even_rows] <- paste0("\\rowcolor[HTML]{F2F6FC}", lines[even_rows])
+
+      if (!is.null(highlight) && highlight <= length(row_lines)) {
+        hl <- row_lines[highlight]
+        col_hex <- gsub("#", "", highlight_col)
+        lines[hl] <- sub(
+          "^(\\\\rowcolor[^}]*\\})?",
+          paste0("\\\\rowcolor[HTML]{", col_hex, "}"),
+          lines[hl]
+        )
+      }
+      raw <- paste(lines, collapse = "\n")
     }
-    for (i in seq_along(col_widths))
-      k <- column_spec(k, i, width = col_widths[[i]])
-    if (!is.null(bold_col))  k <- column_spec(k, bold_col, bold = TRUE)
-    if (!is.null(red_col))   k <- column_spec(k, red_col,  color = "#993C1D")
-    if (!is.null(green_col)) k <- column_spec(k, green_col, color = "#2E7D52")
-    if (!is.null(highlight)) k <- row_spec(k, highlight,
-                                           background = highlight_col, bold = TRUE)
+
+    # Wrap in a [H] float with small font
+    raw <- paste0("\\begin{table}[H]\n\\small\n", raw, "\n\\end{table}")
+
+    structure(raw, class = "knit_asis", knit_meta = list())
+
   } else {
-    k <- kable(df, col.names = col_names)
+    # docx: plain kable only
+    kable(df, col.names = col_names)
   }
-  k
 }
 ```
 
@@ -196,17 +252,93 @@ kt(conda_tbl,
 
 > **`--from-history` vs full export:** `conda env export` pins every package including transitive dependencies and platform-specific build strings, making it non-portable across operating systems. `--from-history` records only what you explicitly installed, letting conda resolve the rest per platform. For sharing within a team, `--from-history` is usually the better choice.
 
+**A note on terminals: Mac vs Windows**
+
+All code in this handout is written for **bash** (the shell used on macOS and Linux). Windows uses PowerShell by default, which has different syntax. Windows users should use one of the following so the commands here work as written:
+
+```{r}
+#| label: tbl-terminals
+#| output: asis
+terminals <- data.frame(
+  Option = c(
+    "Git Bash",
+    "WSL (Windows Subsystem for Linux)",
+    "Positron / VS Code integrated terminal",
+    "Anaconda Prompt"
+  ),
+  Description = c(
+    "Installs with Git for Windows. Gives a full bash shell. Simplest option for this session.",
+    "A full Linux environment inside Windows. More powerful but requires one-time setup.",
+    "Auto-uses bash or Git Bash if configured. Conda commands work out of the box.",
+    "A Windows terminal pre-configured for conda. Conda commands work but bash syntax may not."
+  ),
+  Recommended = c("Yes -- simplest", "Optional", "Yes", "Conda only")
+)
+kt(terminals,
+   col_names  = c("Option", "Description", "For this session"),
+   col_widths = c("3.5cm", "9.5cm", "3cm"))
+```
+
 **Basic conda workflow:**
 
-```{.bash filename="Terminal"}
-conda create -n zas-pythonistas python=3.11   # create once
-conda activate zas-pythonistas                 # activate
+```{.bash filename="Terminal (bash / Git Bash / WSL)"}
+conda env list                               # list environments
+conda create -n zas-python-wg python=3.11   # create once
+conda activate zas-python-wg                 # activate
+conda info --envs                               # list environments
 conda install pandas matplotlib                # install
 conda env export --from-history > environment.yml  # record
 conda env create -f environment.yml            # restore (others)
 ```
 
-> **Positron:** Command Palette -> *Python: Select Interpreter* -> choose your conda environment.
+> **Positron / VS Code:** Command Palette -> *Python: Select Interpreter* -> choose your conda environment. The integrated terminal will use your active conda environment automatically.
+
+### IDEs: VS Code and Positron
+
+Both VS Code and Positron are built on the same engine (VS Code's core), so the interface is nearly identical. Positron is Posit's fork tuned for data science: it adds a persistent Variables pane, a Console panel, and a Plots viewer -- all familiar from RStudio. For this working group either IDE works; Positron is recommended if you are coming from RStudio.
+
+```{r}
+#| label: tbl-ide
+ide_tbl <- data.frame(
+  Feature = c(
+    "Built on",
+    "Python interpreter selection",
+    "Environment activation",
+    "Variables pane",
+    "Console panel",
+    "Plots viewer",
+    "Notebook support",
+    "R support",
+    "Recommended for"
+  ),
+  VSCode = c(
+    "VS Code core",
+    "Command Palette -> Python: Select Interpreter",
+    "Auto-activates .venv or conda env in workspace",
+    "Via Python extension (limited)",
+    "Integrated terminal only",
+    "Via Jupyter extension",
+    "Full .ipynb support",
+    "Via R extension",
+    "General development, large teams"
+  ),
+  Positron = c(
+    "VS Code core (Posit fork)",
+    "Same -- Command Palette -> Python: Select Interpreter",
+    "Same -- auto-activates on project open",
+    "Built-in, always visible (like RStudio)",
+    "Built-in, persistent (like RStudio)",
+    "Built-in viewer pane",
+    "Full .ipynb support",
+    "First-class, built-in",
+    "Data science, R users moving to Python"
+  )
+)
+kt(ide_tbl,
+   col_names  = c("", "VS Code", "Positron"),
+   col_widths = c("3.5cm", "6.5cm", "6cm"),
+   bold_col   = 1)
+```
 
 ```{r}
 #| label: uv-callout
@@ -284,18 +416,18 @@ These conventions apply in any language. Consistent structure makes projects nav
 
 ```{.bash filename="Project structure"}
 my-project/
-├── data/
-│   ├── raw/          # original data -- never modified
-│   └── processed/    # derived data, reproducible from raw
-├── scripts/          # numbered analysis scripts
-├── notebooks/        # exploratory .ipynb files
-├── outputs/
-│   ├── figures/
-│   └── tables/
-├── docs/             # manuscripts, protocols, notes
-├── environment.yml   # conda environment (or requirements.txt)
-├── .gitignore
-└── README.md
+  data/
+    raw/          # original data -- never modified
+    processed/    # derived data, reproducible from raw
+  scripts/        # numbered analysis scripts
+  notebooks/      # exploratory .ipynb files
+  outputs/
+    figures/
+    tables/
+  docs/           # manuscripts, protocols, notes
+  environment.yml # conda environment (or requirements.txt)
+  .gitignore
+  README.md
 ```
 
 **Raw data is sacred.** Never overwrite it, never modify it in place. All transformations happen in code and produce outputs in `data/processed/`.
@@ -611,37 +743,46 @@ print(df.describe())
 
 ---
 
-## R -> Python quick reference
+## R to Python parallels
 
 ```{r}
 #| label: tbl-reference
 ref <- data.frame(
   Concept = c(
-    "Isolated project environment",
+    "IDE",
+    "Isolated environment",
+    "Package install",
     "Dependency lockfile",
     "Restore environment",
+    "Project root",
     "Project-relative paths",
     "Set random seed",
-    "Reproducible report format",
-    "Cache slow computations",
-    "Inline computed value in text",
+    "Dynamic report format",
+    "Freeze / cache computations",
+    "Inline computed value",
     "Version control"
   ),
   R = c(
-    "renv library",
+    "RStudio / Positron",
+    "renv library (.Rprofile)",
+    "install.packages() / pak::pak()",
     "renv.lock",
     "renv::restore()",
+    ".Rproj file sets working directory",
     "here::here()",
     "set.seed(42)",
-    ".Rmd / .qmd",
+    ".Rmd or .qmd",
     "knitr cache = TRUE",
     "`r round(val, 2)`",
     "git (same)"
   ),
   Python = c(
+    "Positron / VS Code",
     "conda env  or  .venv (venv)",
+    "conda install / pip install",
     "environment.yml  or  requirements.txt  or  uv.lock",
     "conda env create -f environment.yml  or  pip install -r requirements.txt",
+    "No automatic root -- use explicit Path(__file__) convention",
     "Path(__file__).parent / ...",
     "random.seed(42)  +  numpy.random.seed(42)",
     ".qmd with jupyter: python3",
@@ -650,7 +791,7 @@ ref <- data.frame(
     "git (same)"
   )
 )
-kt(ref, col_widths = c("4cm", "4.5cm", "8cm"))
+kt(ref, col_widths = c("3.8cm", "4.8cm", "7.9cm"))
 ```
 
 ---
