@@ -26,6 +26,11 @@ from pathlib import Path
 #     conda env export --from-history > environment-minimal.yml
 #     Compare the two files. What is the difference?
 
+# A4. Restart session:
+#     Close and re-open your IDE (VS Code/Positron). Open your project 
+#     folder, activate conda your environment in the terminal 
+#     (`conda activate env_name`), and select the relevant interpreter.
+
 # =============================================================
 # PART B: fix the broken file path
 # =============================================================
@@ -39,7 +44,7 @@ from pathlib import Path
 # TODO B2: replace the broken path below with a relative path
 # using pyprojroot or pathlib (see the session handout for the pattern)
 
-data_path = "/Users/replace-me/projects/zas-pythonistas/data/raw/sample.csv"
+data_path = "/Users/replace-me/projects/zas_python_wg/data/readtion_times.csv"
 
 # B3. Once you have fixed the path, run the script again.
 # If it works you should see the data printed below.
@@ -47,6 +52,8 @@ data_path = "/Users/replace-me/projects/zas-pythonistas/data/raw/sample.csv"
 df = pd.read_csv(data_path)
 print(f"Loaded {len(df)} rows")
 print(df.describe())
+
+# B4. Save your environment to environment.yml. Inspect it; is pyprojroot there?
 
 # =============================================================
 # PART C: git hygiene

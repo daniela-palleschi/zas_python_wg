@@ -9,17 +9,18 @@ format:
     number-sections: false
     highlight-style: github
   pdf:
-    toc: false
-    number-sections: false
+    toc: true
+    number-sections: true
+    number-depth: 2
     highlight-style: github
     geometry: "top=2cm, bottom=2cm, left=2cm, right=2cm"
     fontsize: 10pt
     papersize: a4
     keep-tex: false
     pdf-engine: xelatex
-    mainfont: "Helvetica Neue"
-    sansfont: "Helvetica Neue"
-    monofont: "Menlo"
+    mainfont: "Arial"
+    sansfont: "Arial"
+    monofont: "Courier New"
     colorlinks: true
     linkcolor: linkblue
     urlcolor: linkblue
@@ -30,8 +31,6 @@ format:
         \usepackage{longtable}
         \usepackage{xcolor}
         \usepackage{colortbl}
-        \usepackage{tcolorbox}
-        \tcbuselibrary{skins, breakable}
         \definecolor{linkblue}{HTML}{4472C4}
         \definecolor{codebg}{HTML}{F3F3F3}
         \definecolor{codeborder}{HTML}{BBBBBB}
@@ -153,7 +152,10 @@ kt <- function(df,
 }
 ```
 
-## Session overview
+
+{{< pagebreak >}}
+
+## Session overview  {.unnumbered}
 
 **Duration:** 90 minutes. **Format:** Discussion + live demo + hands-on exercise.
 
@@ -161,7 +163,7 @@ This session builds from general principles to Python-specific tools -- concepts
 
 ---
 
-## Schedule
+## Schedule {.unnumbered}
 
 ```{r}
 #| label: tbl-schedule
@@ -193,7 +195,7 @@ kt(schedule,
 
 ---
 
-## 1 - What is reproducibility?
+## What is reproducibility?
 
 Reproducibility means someone else -- or future you -- can re-run your analysis and get the same result. It operates at two levels:
 
@@ -208,16 +210,20 @@ Reproducibility is a spectrum -- the goal is not perfection from day one, but de
 
 ---
 
-## 2 - Virtual environments & file paths
+{{< pagebreak >}}
+
+
+## Virtual environments and package management
 
 ### Virtual environments
 
 A virtual environment is an isolated Python installation scoped to a single project -- the R equivalent of an `renv` library. Do not install packages into your global Python.
 
-**This working group uses conda.** venv + pip is shown as a lighter alternative for pure-Python projects.
+**This working group uses conda**, which is a package manager and virtual environment manager in one. You could also use venv (virtual environment manager) + pip (package manager) instead for a lighter alternative for pure-Python projects.
 
 ```{r}
 #| label: tbl-conda
+#| tbl-cap: "conda and venv/pip commands are bash code to be entered in the shell (e.g., Terminal, PowerShell, Anaconda Prompt)"
 conda_tbl <- data.frame(
   Question = c(
     "Create an environment",
@@ -252,12 +258,15 @@ kt(conda_tbl,
 
 > **`--from-history` vs full export:** `conda env export` pins every package including transitive dependencies and platform-specific build strings, making it non-portable across operating systems. `--from-history` records only what you explicitly installed, letting conda resolve the rest per platform. For sharing within a team, `--from-history` is usually the better choice.
 
-**A note on terminals: Mac vs Windows**
+:::{.callout-note}
+### A note on terminals: Mac vs Windows
 
 All code in this handout is written for **bash** (the shell used on macOS and Linux). Windows uses PowerShell by default, which has different syntax. Windows users should use one of the following so the commands here work as written:
+:::
 
 ```{r}
 #| label: tbl-terminals
+#| tbl-cap: "Terminal options"
 #| output: asis
 terminals <- data.frame(
   Option = c(
@@ -279,7 +288,12 @@ kt(terminals,
    col_widths = c("3.5cm", "9.5cm", "3cm"))
 ```
 
-**Basic conda workflow:**
+:::{.callout-tip}
+### Conda in IDE integrated terminal
+You can use conda in the Positron / VS Code integrated terminal on macOS without any additional setup. On Windows, first run `conda init powershell` from Anaconda Prompt, then close and reopen your IDE. You only need to do this once.
+:::
+
+### Basic conda workflow
 
 ```{.bash filename="Terminal (bash / Git Bash / WSL)"}
 conda env list                                  # list all environments
@@ -340,80 +354,43 @@ kt(ide_tbl,
    bold_col   = 1)
 ```
 
-```{r}
-#| label: workflow-tip
-#| output: asis
-workflow_pdf <- "\\begin{tcolorbox}[colback=highlightbg, colframe=linkblue, arc=3pt, title={\\sffamily\\bfseries Your typical workflow}, fonttitle=\\bfseries\\small\\sffamily, coltitle=white, boxed title style={colback=linkblue}, breakable]
-\\small
-\\begin{enumerate}
-  \\item Open Positron (or VS Code)
-  \\item \\textbf{File $\\to$ Open Folder} $\\to$ navigate to your project folder
-  \\item Check the interpreter in the \\textbf{bottom status bar} -- it should show your conda environment name (e.g. \\texttt{zas-python-wg}). If not: Command Palette $\\to$ Python: Select Interpreter $\\to$ choose it
-  \\item Open the integrated terminal (\\texttt{Ctrl+`} or Terminal $\\to$ New Terminal) -- it should activate your conda environment automatically
-  \\item Verify: \\texttt{conda info --envs} (asterisk next to active env) and \\texttt{pwd} (correct folder)
-\\end{enumerate}
-\\end{tcolorbox}"
+::: {.callout-important}
+### Your typical workflow
 
-workflow_docx <- "> **Your typical workflow**
->
-> 1. Open Positron (or VS Code)
-> 2. **File -> Open Folder** -> navigate to your project folder
-> 3. Check the interpreter in the **bottom status bar** -- it should show your conda environment name (e.g. `zas-python-wg`). If not: Command Palette -> Python: Select Interpreter -> choose it
-> 4. Open the integrated terminal (`Ctrl+backtick` or Terminal -> New Terminal) -- it should activate your conda environment automatically
-> 5. Verify with `conda info --envs` (asterisk = active env) and `pwd` (correct folder)"
+1. Open Positron (or VS Code)
+2. **File -> Open Folder** -> navigate to your project folder
+3. Check the interpreter in the **bottom status bar** -- it should show your conda environment name (e.g. `zas_python_wg`). If not: Command Palette -> Python: Select Interpreter -> choose it
+4. Open the integrated terminal (`Ctrl+\`` or Terminal -> New Terminal) -- it should activate your conda environment automatically
+5. Verify with `conda info --envs` (asterisk = active env) and `pwd` (correct folder)
+:::
 
-if (is_pdf) cat(workflow_pdf) else cat(workflow_docx)
-```
+::: {.callout-tip}
+### uv: a faster modern alternative worth knowing about
 
-```{r}
-#| label: uv-callout
-#| output: asis
-if (is_pdf) {
-  cat("\\begin{tcolorbox}[colback=highlightbg, colframe=linkblue, arc=3pt,
-    title={\\sffamily\\bfseries uv -- a faster modern alternative worth knowing about},
-    fonttitle=\\bfseries\\small\\sffamily, coltitle=white,
-    boxed title style={colback=linkblue}, breakable]
-\\small
-\\texttt{uv} is a package and project manager for Python written in Rust (by the team behind \\texttt{ruff}).
-It replaces venv, pip, pip-tools, and pyenv with a single tool and is 10-100x faster than pip for installs.
+`uv` is a package and project manager for Python written in Rust, by the team behind the `ruff` linter. It replaces venv, pip, pip-tools, and pyenv with a single tool and is 10-100x faster than pip for installs.
 
-\\medskip
-\\textbf{What makes it different from venv + pip:}
-\\begin{itemize}
-  \\item Generates a proper lockfile (\\texttt{uv.lock}) with full dependency graph resolution -- a much closer analogue to \\texttt{renv.lock} than \\texttt{pip freeze} is
-  \\item Manages Python versions itself: \\texttt{uv python install 3.12} -- no separate pyenv needed
-  \\item Scaffolds new projects: \\texttt{uv init my-project}
-  \\item Runs scripts without manual activation: \\texttt{uv run script.py}
-\\end{itemize}
+**What makes it different from venv + pip:**
 
-\\medskip
-\\textbf{Basic workflow (Terminal):}
-\\begin{verbatim}
+- Generates a proper lockfile (`uv.lock`) with full dependency graph resolution -- a much closer analogue to `renv.lock` than `pip freeze` is
+- Manages Python versions itself: `uv python install 3.12` -- no separate pyenv needed
+- Scaffolds new projects: `uv init my-project`
+- Runs scripts without manual activation: `uv run script.py`
+
+```{.bash filename="Terminal"}
 uv init my-project        # scaffold project + pyproject.toml
 cd my-project
 uv add pandas matplotlib  # install + update lockfile automatically
 uv sync                   # restore environment from uv.lock
-\\end{verbatim}
-
-See: \\url{https://docs.astral.sh/uv}
-\\end{tcolorbox}")
-} else {
-  cat("> **uv -- a faster modern alternative worth knowing about**
->
-> `uv` is a package and project manager for Python written in Rust (by the team behind `ruff`).
-> It replaces venv, pip, pip-tools, and pyenv with a single tool and is 10-100x faster than pip.
->
-> Key differences from venv + pip: generates a proper lockfile (`uv.lock`, closer to `renv.lock` than `pip freeze`);
-> manages Python versions itself (`uv python install 3.12`); scaffolds projects (`uv init my-project`);
-> runs scripts without activation (`uv run script.py`).
->
-> Basic workflow: `uv init my-project` / `uv add pandas matplotlib` / `uv sync`
->
-> See: <https://docs.astral.sh/uv>")
-}
 ```
 
-### Project-relative file paths
+See: [docs.astral.sh/uv](https://docs.astral.sh/uv)
+:::
+
+### Exercises: Part A
+
+Open the `repro_exercises.py` file and do the exercises under Part A 'Check your environment'.
+
+## Project-relative file paths
 
 Hardcoded absolute paths break on every machine except the one they were written on. There are two good ways to fix this in Python.
 
@@ -447,9 +424,13 @@ output_path.mkdir(parents=True, exist_ok=True)  # create if needed
 
 This works without any extra packages but requires counting `.parent` calls correctly -- which breaks if you move the script to a different subfolder depth. Use `pyprojroot` if you want `here()`-style convenience.
 
+### Exercises: Part B
+
+Open the `repro_exercises.ipynb` file and do the exercises under Part B 'Fix the broken file path'. Try the same exercises in `repor_exercises.qmd`. How do you find working in one versus the other?
+
 ---
 
-## 3 - Naming conventions & folder structure
+## Naming conventions & folder structure
 
 These conventions apply in any language. Consistent structure makes projects navigable by collaborators and comprehensible to your future self.
 
@@ -511,7 +492,7 @@ kt(naming,
 
 ### README as a map
 
-Every project README should answer three questions: what does this project do, how do I run it, and what do the outputs mean?
+Every project should answer three questions: what does this project do, how do I run it, and what do the outputs mean?
 
 ```{.markdown filename="README.md"}
 # Project name
@@ -519,7 +500,7 @@ One sentence describing the study or task.
 
 ## Setup
 conda env create -f environment.yml
-conda activate zas_python_wg
+conda activate zas-pythonistas
 
 ## Running the analysis
 python scripts/01_clean-data.py
@@ -532,7 +513,7 @@ outputs/tables/   -- model results tables
 
 ---
 
-## 4 - Version control with git
+## Version control with git
 
 Git tracks changes to your files over time, so you can see what changed, when, and why -- and roll back if something breaks. It is language-agnostic and works for any text-based project. GitHub (and GitLab, Codeberg, etc.) are hosting platforms for git repositories; git itself runs entirely on your local machine.
 
@@ -603,13 +584,38 @@ __pycache__/
 # Conda
 .conda/
 
+# Quarto
+/.quarto/
+_book/
+*_files/
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+
+# LaTeX auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Temporary conda exports
+environment-full.yml
+environment-minimal.yml
+
 # Secrets -- never commit these
 .env
 *.key
 
-# Large data files (store elsewhere, e.g. OSF or NAS)
+# macOS
+.DS_Store
+
+# Large data files (store on OSF or NAS)
 data/raw/
-*.csv
 *.edf
 *.mat
 ```
@@ -630,7 +636,11 @@ We will cover branching and collaborative workflows (pull requests, merge confli
 
 ---
 
-## 5 - Quarto vs. Jupyter notebooks
+### Exercises: Part C
+
+Open the `repro_exercises` exercises in whicher file format you prefer (`.py`, `.ipynb`, `.qmd`) and do the exercises under Part A 'git hygiene'.
+
+## Quarto vs. Jupyter notebooks
 
 ### They are not competitors
 
@@ -682,7 +692,7 @@ The biggest reproducibility risk in `.ipynb` files is **out-of-order execution**
 
 ### What `freeze: true` does in Quarto
 
-By default, Quarto re-runs all your code from scratch on every render -- correct for reproducibility, but slow for heavy computations like model fitting or preprocessing big datasets. `freeze: true` changes this: Quarto **caches each chunk's output** and only re-runs a chunk when its source code actually changes.
+By default, Quarto re-runs all your code from scratch on every render -- correct for reproducibility, but slow for heavy computations like model fitting or EEG preprocessing. `freeze: true` changes this: Quarto **caches each chunk's output** and only re-runs a chunk when its source code actually changes.
 
 - **First render:** runs everything, saves outputs into a `_freeze/` folder alongside your `.qmd`
 - **Subsequent renders:** skips unchanged chunks and reuses saved outputs
@@ -705,81 +715,6 @@ Use notebooks for the messy exploratory work. Once the approach is settled, move
 # Extract clean code from a notebook when you are ready
 jupyter nbconvert --to script exploration.ipynb
 # produces exploration.py -- paste the useful parts into your .qmd
-```
-
----
-
-## 6 - Hands-on exercise
-
-**Setup:** the group repo is already cloned and your conda environment is active. The repo contains `scripts/01_analyse.py` (a short script with a reproducibility problem) and `environment.yml`.
-
-### Part A - Dependency management
-
-```{r}
-#| label: tbl-exercise-a
-ex_a <- data.frame(
-  Step = c("A1", "A2", "A3", "A4"),
-  Task = c(
-    "Activate your conda environment: conda activate zas_python_wg",
-    "Export it: conda env export > environment-full.yml -- open the file and inspect what is there",
-    "Compare with the leaner version: conda env export --from-history > environment-minimal.yml -- what is the difference?",
-    "Optional: try the venv equivalent in a separate terminal: python -m venv .venv && source .venv/bin/activate && pip install pandas && pip freeze > requirements.txt"
-  )
-)
-kt(ex_a, col_widths = c("1.2cm", "15.3cm"))
-```
-
-### Part B - Project-relative file paths
-
-Open `scripts/01_analyse.py`. It contains a hardcoded absolute path that breaks on every machine except the one it was written on.
-
-```{r}
-#| label: tbl-exercise-b
-ex_b <- data.frame(
-  Step = c("B1", "B2", "B3"),
-  Task = c(
-    "Run the script and read the error: python scripts/01_analyse.py",
-    "Fix the broken path using pathlib so it resolves relative to the project root (see the pathlib pattern on this handout)",
-    "Run the script again to confirm it works: python scripts/01_analyse.py"
-  )
-)
-kt(ex_b, col_widths = c("1.2cm", "15.3cm"))
-```
-
-### Part C - Git hygiene
-
-```{r}
-#| label: tbl-exercise-c
-ex_c <- data.frame(
-  Step = c("C1", "C2", "C3", "Stretch"),
-  Task = c(
-    "Check what git would currently commit: git status -- notice anything that should not be there?",
-    "Create a .gitignore that excludes: __pycache__/, *.pyc, .ipynb_checkpoints/, .venv/ (if created in A4)",
-    "Stage your fixed script and .gitignore and commit with a descriptive message",
-    "Move the output of 01_analyse.py into a .qmd file and render it to HTML with Quarto"
-  )
-)
-kt(ex_c,
-   col_widths = c("1.5cm", "15cm"),
-   highlight  = 4)
-```
-
-### Skeleton script for the repo
-
-Add this as `scripts/01_analyse.py` before the session. Also commit a small `data/raw/sample.csv` with a few rows of dummy data.
-
-```{.python filename="scripts/01_analyse.py"}
-import pandas as pd
-from pathlib import Path
-
-# -------------------------------------------------------
-# TODO: this path is broken -- fix it using pathlib
-# -------------------------------------------------------
-data_path = "/Users/replace-me/projects/zas_python_wg/data/raw/sample.csv"
-
-df = pd.read_csv(data_path)
-print(f"Loaded {len(df)} rows")
-print(df.describe())
 ```
 
 ---

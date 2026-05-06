@@ -30,25 +30,29 @@ Render this document when you are done: `quarto render session03_exercise.qmd`
 
 ## Part A: check your environment
 
-**A1.** In the terminal, list your conda environments and confirm the right one is active:
+### A1. In the terminal, list your conda environments and confirm the right one is active:
 
 ```{.bash filename="Terminal"}
 conda info --envs
 ```
 
-**A2.** Export your full environment and open the file to inspect it:
+### A2. Export your full environment and open the file to inspect it:
 
 ```{.bash filename="Terminal"}
 conda env export > environment-full.yml
 ```
 
-**A3.** Now export only what you explicitly installed:
+### A3. Now export only what you explicitly installed:
 
 ```{.bash filename="Terminal"}
 conda env export --from-history > environment-minimal.yml
 ```
 
 What is the difference between the two files? Which would you commit to the repo and why?
+
+### A4. Restart session
+
+Close and re-open your IDE (VS Code/Positron). Open your project folder, activate conda your environment in the terminal (`conda activate env_name`), and select the relevant interpreter.
 
 ---
 
@@ -57,7 +61,7 @@ What is the difference between the two files? Which would you commit to the repo
 The cell below contains a hardcoded absolute path that will break on every
 machine except the one it was written on.
 
-**B1.** Run the cell as-is and read the error.
+### B1. Run the cell as-is and read the error.
 
 ```{python}
 import pandas as pd
@@ -72,15 +76,20 @@ print(f"Loaded {len(df)} rows")
 df.head()
 ```
 
-**B2.** Fix the path using `pyprojroot`:
+### B2. Fix the path using `pyprojroot`:
 
 ```{python}
 # Your fixed version here
 
 ```
 
-**B3.** Once it works, notice how the output renders inline in the document.
+### B3. Once it works, notice how the output renders inline in the document.
 This is one advantage of Quarto over a plain script.
+
+
+### B4. Update environment.yml
+
+ Save your environment to environment.yml. Inspect it; is pyprojroot there?
 
 ---
 
@@ -89,7 +98,7 @@ This is one advantage of Quarto over a plain script.
 Work through these steps in the terminal -- you cannot run git commands
 in a Python chunk, but you can document what you did here.
 
-**C1.** Check what git currently sees:
+### C1. Check what git currently sees:
 
 ```{.bash filename="Terminal"}
 git status
@@ -97,7 +106,7 @@ git status
 
 Do you see any files that should not be committed (e.g. `__pycache__/`, `.ipynb_checkpoints/`)?
 
-**C2.** Create or update `.gitignore` to exclude:
+### C2. Create or update `.gitignore` to exclude:
 
 ```{.bash filename=".gitignore"}
 __pycache__/
@@ -108,7 +117,7 @@ environment-full.yml
 environment-minimal.yml
 ```
 
-**C3.** Stage and commit your work:
+### C3. Stage and commit your work:
 
 ```{.bash filename="Terminal"}
 git add session03_exercise.qmd .gitignore
