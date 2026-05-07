@@ -4,4 +4,44 @@
 
 /.quarto/
 
+*.tex
 **/*.quarto_ipynb
+_book/
+
+# Quarto
+/.quarto/
+*_files/
+_freeze/         # only if you don't want to commit frozen outputs
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj          # optional -- keep if you want to share project settings
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Conda temporary exports
+environment-full.yml
+environment-minimal.yml
+
+# LaTeX auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# macOS
+.DS_Store
+
+# Secrets
+.env
+*.key
