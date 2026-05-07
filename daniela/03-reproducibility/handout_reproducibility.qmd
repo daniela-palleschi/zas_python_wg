@@ -185,11 +185,11 @@ schedule <- data.frame(
     "Python-specific",
     "Python",
     "--"
-  ),
-  Time = c("8 min", "18 min", "12 min", "10 min", "17 min", "18 min", "7 min")
+  )
+  # Time = c("8 min", "18 min", "12 min", "10 min", "17 min", "18 min", "7 min")
 )
 kt(schedule,
-   col_widths = c("9cm", "5cm", "2cm"),
+   col_widths = c("9cm", "5cm"),
    highlight  = 6)
 ```
 
@@ -256,12 +256,20 @@ kt(conda_tbl,
    bold_col   = 1)
 ```
 
-> **`--from-history` vs full export:** `conda env export` pins every package including transitive dependencies and platform-specific build strings, making it non-portable across operating systems. `--from-history` records only what you explicitly installed, letting conda resolve the rest per platform. For sharing within a team, `--from-history` is usually the better choice.
+**`--from-history` vs full export:** `conda env export` pins every package including transitive dependencies and platform-specific build strings, making it non-portable across operating systems. `--from-history` records only what you explicitly installed, letting conda resolve the rest per platform. For sharing within a team, `--from-history` is usually the better choice.
+
+
+::: {.callout-warning}
+#### Avoid `conda` + `pip`
+If you install packages via pip inside conda, `--from-history` won't capture them. Ideally install everything with conda install where possible, and use p`ip only for packages not on conda channels.
+:::
+
+**Why bother with environment-relative package libraries?** It's best practice to avoid installing packages into your base environment. Instead, create a separate environment for each project and install only the packages that project needs. This prevents version conflicts between projects — for example, one project requiring an older version of a package than another. It also keeps your setup reproducible: anyone can recreate your exact environment from your `environment.yml`. It's the same logic behind using Rprojects (environment) and `renv` lockfiles (package management) when working in R.
 
 :::{.callout-note}
 ### A note on terminals: Mac vs Windows
 
-All code in this handout is written for **bash** (the shell used on macOS and Linux). Windows uses PowerShell by default, which has different syntax. Windows users should use one of the following so the commands here work as written:
+Most code in this handout is written for **bash** (the shell used on macOS and Linux). Windows uses PowerShell by default, which has different syntax. Windows users should use one of the following so the commands here work as written:
 :::
 
 ```{r}
@@ -359,44 +367,31 @@ kt(ide_tbl,
 
 1. Open Positron (or VS Code)
 2. **File -> Open Folder** -> navigate to your project folder
-3. Check the interpreter in the **bottom status bar** -- it should show your conda environment name (e.g. `zas_python_wg`). If not: Command Palette -> Python: Select Interpreter -> choose it
+3. Check the interpreter in your **status bar** -- it should show your conda environment name (e.g. `zas_python_wg`). If not: Command Palette -> Python: Select Interpreter -> choose it. Alternatively, check in Terminal with `which python` and `which python
+python --version` (but you can't select it in the Terminal).
 4. Open the integrated terminal (`Ctrl+\`` or Terminal -> New Terminal) -- it should activate your conda environment automatically
-5. Verify with `conda info --envs` (asterisk = active env) and `pwd` (correct folder)
+5. Verify with `conda info --envs` (asterisk = active env) and `pwd` (correct folder). If there is no asterisk (*) next to your environment, run `conda activate zas_python_wg` and verify.
 :::
 
-::: {.callout-tip}
-### uv: a faster modern alternative worth knowing about
-
-`uv` is a package and project manager for Python written in Rust, by the team behind the `ruff` linter. It replaces venv, pip, pip-tools, and pyenv with a single tool and is 10-100x faster than pip for installs.
-
-**What makes it different from venv + pip:**
-
-- Generates a proper lockfile (`uv.lock`) with full dependency graph resolution -- a much closer analogue to `renv.lock` than `pip freeze` is
-- Manages Python versions itself: `uv python install 3.12` -- no separate pyenv needed
-- Scaffolds new projects: `uv init my-project`
-- Runs scripts without manual activation: `uv run script.py`
-
-```{.bash filename="Terminal"}
-uv init my-project        # scaffold project + pyproject.toml
-cd my-project
-uv add pandas matplotlib  # install + update lockfile automatically
-uv sync                   # restore environment from uv.lock
-```
-
-See: [docs.astral.sh/uv](https://docs.astral.sh/uv)
-:::
+---
 
 ### Exercises: Part A
 
 Open the `repro_exercises.py` file and do the exercises under Part A 'Check your environment'.
 
+---
+
+{{< pagebreak >}}
+
 ## Project-relative file paths
 
 Hardcoded absolute paths break on every machine except the one they were written on. There are two good ways to fix this in Python.
 
-**Option 1: `pyprojroot` (recommended -- closest to `here::here()`)**
+### Option 1: `pyprojroot`
 
-Install once: `conda install pyprojroot` or `pip install pyprojroot`
+This is the recommended option as it's closest to `here::here()` in R.
+
+Install once: `conda install pyprojroot` (or `pip install pyprojroot` if not using conda)
 
 ```{.python filename="Python"}
 from pyprojroot import here
@@ -408,7 +403,27 @@ output_path = here("outputs/figures")
 
 `pyprojroot` walks up from the current file until it finds a project root marker -- `.git`, `pyproject.toml`, `environment.yml`, etc. -- and anchors all paths there. This is the direct Python equivalent of `here::here()` and works correctly regardless of where the script lives in the project.
 
-**Option 2: `pathlib` (no extra install)**
+:::{.callout-tip}
+#### Updating `environment.yml`
+Whenever you install a new package, update your `environment.yml` so others can reproduce your environment:
+
+```{.bash filename="Terminal"}
+conda env export --from-history > environment.yml
+```
+
+Whenever you open a project, remember to activate its environment before running any code:
+
+```{.bash filename="Terminal"}
+conda activate <env-name>
+```
+
+
+This ensures you're using the right packages (even on your own machine) which is also why keeping `environment.yml` up to date matters, since that's what recreates the environment elsewhere.
+:::
+
+### Option 2: `pathlib` 
+
+This option requires no extra installation.
 
 ```{.python filename="Python"}
 from pathlib import Path
@@ -424,11 +439,15 @@ output_path.mkdir(parents=True, exist_ok=True)  # create if needed
 
 This works without any extra packages but requires counting `.parent` calls correctly -- which breaks if you move the script to a different subfolder depth. Use `pyprojroot` if you want `here()`-style convenience.
 
+---
+
 ### Exercises: Part B
 
 Open the `repro_exercises.ipynb` file and do the exercises under Part B 'Fix the broken file path'. Try the same exercises in `repor_exercises.qmd`. How do you find working in one versus the other?
 
 ---
+
+{{< pagebreak >}}
 
 ## Naming conventions & folder structure
 
@@ -452,7 +471,11 @@ my-project/
   README.md
 ```
 
-**Raw data is sacred.** Never overwrite it, never modify it in place. All transformations happen in code and produce outputs in `data/processed/`.
+:::{.callout-important}
+#### Raw data is sacred
+
+Never overwrite raw data and never modify it in place. All transformations happen in code and produce outputs in `data/processed/`.
+:::
 
 ### File naming
 
@@ -512,6 +535,8 @@ outputs/tables/   -- model results tables
 ```
 
 ---
+
+{{< pagebreak >}}
 
 ## Version control with git
 
@@ -634,11 +659,13 @@ git merge feature/add-preprocessing    # merge when ready
 
 We will cover branching and collaborative workflows (pull requests, merge conflicts) in a future session.
 
----
-
 ### Exercises: Part C
 
 Open the `repro_exercises` exercises in whicher file format you prefer (`.py`, `.ipynb`, `.qmd`) and do the exercises under Part A 'git hygiene'.
+
+---
+
+{{< pagebreak >}}
 
 ## Quarto vs. Jupyter notebooks
 
@@ -718,6 +745,8 @@ jupyter nbconvert --to script exploration.ipynb
 ```
 
 ---
+
+{{< pagebreak >}}
 
 ## R to Python parallels
 

@@ -1,10 +1,18 @@
-name: zas_python_wg
+name: base
 channels:
-  - conda-forge
   - defaults
 dependencies:
   - python=3.11
+  - conda==23.5.2
+  - setuptools
   - pip
-  - pyprojroot
+  - wheel
+  - conda-content-trust
+  - conda-libmamba-solver
+  - python.app
+  - numpy
   - pandas
-prefix: /Users/danielapalleschi/miniconda3/envs/zas_python_wg
+  - jupyter
+  - matplotlib
+  - seaborn
+prefix: /Users/palleschi/miniconda3
